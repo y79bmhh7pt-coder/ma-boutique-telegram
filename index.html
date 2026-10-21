@@ -1,630 +1,335 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ma Boutique</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ma boutique</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root {
   --yellow: #ffd400;
   --black: #080808;
   --panel: #171717;
 }
-
 * { box-sizing: border-box; }
-
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--black);
   color: white;
+  background: #080808;
+  background-image: linear-gradient(#0009,#000d),
+    url("fond.jpg");
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+  font-family: Arial, sans-serif;
 }
-
 header {
   text-align: center;
-  padding: 24px 12px;
-  background: linear-gradient(#000000b8, #080808);
-  border-bottom: 2px solid var(--yellow);
+  padding: 25px 12px;
 }
-
-header h1 {
-  color: var(--yellow);
-  margin: 0 0 8px;
-}
-
-header p { color: #ccc; }
-
-main {
-  max-width: 850px;
-  padding: 18px;
-  margin: auto;
-}
-
-h2 { color: var(--yellow); }
-
-.categories, .products {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.category, .product {
-  background: var(--panel);
-  border: 1px solid #333;
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-.category {
-  cursor: pointer;
-  text-align: center;
-  padding-bottom: 12px;
-}
-
-.category img {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  display: block;
-}
-
-.category h3 { margin: 12px 4px; }
-
-.product { padding-bottom: 14px; }
-
-.product video {
-  width: 100%;
-  display: block;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  background: #222;
-}
-
-.product h3, .product p { margin: 12px; }
-
-.price {
-  color: var(--yellow);
-  font-size: 19px;
-  font-weight: bold;
-}
-
-button {
-  border: 0;
-  border-radius: 9px;
+h1 { color: var(--yellow); margin: 0; }
+h2 { font-size: 21px; }
+main { max-width: 700px; margin: auto; padding: 12px; }
+button, select {
   padding: 12px;
+  border: 0;
+  border-radius: 10px;
   font-size: 15px;
+}
+button {
+  background: var(--yellow);
+  color: black;
   font-weight: bold;
   cursor: pointer;
-  background: var(--yellow);
-  color: #111;
 }
-
-.category button { margin-top: 4px; }
-
-.product button {
-  width: calc(100% - 24px);
-  margin: 0 12px;
+.back { margin-bottom: 14px; }
+.categories {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
-
-.secondary {
-  background: #292929;
-  color: white;
-  border: 1px solid #555;
+.category {
+  min-height: 155px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid #ffffff30;
+  background-position: center;
+  background-size: cover;
+  text-shadow: 0 2px 6px black;
 }
-
-.hidden { display: none !important; }
-
-label {
-  display: block;
-  margin: 16px 0 7px;
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 13px;
+.category span {
+  background: #000b;
+  padding: 9px;
   border-radius: 8px;
-  border: 1px solid #444;
-  background: #171717;
+}
+.card, .cart {
+  background: #171717ee;
+  border: 1px solid #ffffff20;
+  border-radius: 15px;
+  padding: 13px;
+  margin: 12px 0;
+}
+video {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  background: #000;
+  border-radius: 10px;
+  object-fit: contain;
+}
+select { width: 100%; margin: 10px 0; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.actions button { flex: 1; }
+.total { color: var(--yellow); font-size: 21px; font-weight: bold; }
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 7px 0;
+  border-radius: 9px;
+  border: 1px solid #555;
+  background: #101010;
   color: white;
-  font: inherit;
 }
-
-textarea { resize: vertical; }
-
-.field { margin-bottom: 14px; }
-
-.order-line {
-  border-bottom: 1px solid #333;
-  padding: 12px 0;
-}
-
-.total {
-  color: var(--yellow);
-  font-size: 23px;
-  font-weight: bold;
-  margin: 20px 0;
-}
-
-.note {
-  color: #bbb;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-@media (max-width: 480px) {
-  main { padding: 12px; }
-  .categories, .products { gap: 9px; }
-  .category h3, .product h3 { font-size: 15px; }
-}
+.hidden { display: none !important; }
+.small { color: #ccc; font-size: 13px; }
 </style>
 </head>
-
 <body>
-
 <header>
-  <h1 id="shopTitle">LABO EXPRESS 57</h1>
-  <p>Découvre notre sélection</p>
+  <h1>MA BOUTIQUE</h1>
+  <p>Choisis tes produits et passe commande</p>
 </header>
 
 <main>
-
   <section id="home">
     <h2>Nos catégories</h2>
-    <div class="categories" id="categories"></div>
+    <div class="categories">
+      <button class="category"
+        style="background-image:linear-gradient(#0002,#0008),url('categorie1.jpg')"
+        onclick="openCategory(1)">
+        <span>Catégorie 1</span>
+      </button>
+      <button class="category"
+        style="background-image:linear-gradient(#0002,#0008),url('categorie2.jpg')"
+        onclick="openCategory(2)">
+        <span>Catégorie 2</span>
+      </button>
+    </div>
   </section>
 
-  <section id="catalog" class="hidden">
-    <button class="secondary" onclick="showHome()">← Retour</button>
+  <section id="products" class="hidden">
+    <button class="back" onclick="showHome()">← Retour</button>
     <h2 id="categoryTitle"></h2>
-    <div class="products" id="products"></div>
+    <div id="productList"></div>
   </section>
 
-  <section id="detail" class="hidden">
-    <button class="secondary" onclick="showCatalog()">
-      ← Retour aux produits
-    </button>
-    <div id="detailContent"></div>
-    <button onclick="addToCart()">Ajouter au panier</button>
+  <section id="cartSection" class="cart">
+    <h2>🛒 Mon panier</h2>
+    <div id="cartItems">Ton panier est vide.</div>
+    <p class="total">Total : <span id="total">0,00</span> €</p>
+    <button onclick="checkout()">Commander</button>
   </section>
 
-  <section id="checkout" class="hidden">
-    <button class="secondary" onclick="showHome()">
-      ← Retour à la boutique
-    </button>
-
-    <h2>Mon panier</h2>
-    <div id="cartItems"></div>
-    <div class="total" id="cartTotal">Total : 0 €</div>
-
-    <h2>Réception</h2>
-
-    <div class="field">
-      <label for="method">Mode de réception</label>
-      <select id="method" onchange="toggleAddress()">
-        <option value="Sur place">Sur place</option>
-        <option value="Livraison">Livraison</option>
-      </select>
+  <section id="checkoutSection" class="cart hidden">
+    <button class="back" onclick="showCart()">← Retour au panier</button>
+    <h2>📦 Mode de commande</h2>
+    <label><input type="radio" name="mode" value="Livraison"
+      onchange="toggleAddress()"> Livraison</label>
+    <label><input type="radio" name="mode" value="Sur place"
+      onchange="toggleAddress()"> Sur place</label>
+    <div id="addressBox" class="hidden">
+      <label>Adresse de livraison</label>
+      <input id="address" placeholder="Ton adresse">
+      <label>Précisions (facultatif)</label>
+      <input id="details" placeholder="Bâtiment, étage...">
     </div>
-
-    <div class="field hidden" id="addressField">
-      <label for="address">Adresse de livraison</label>
-      <textarea id="address" rows="3"
-        placeholder="Adresse complète"></textarea>
-    </div>
-
-    <div class="field">
-      <label for="customer">Nom ou prénom (facultatif)</label>
-      <input id="customer" placeholder="Ton prénom">
-    </div>
-
-    <div class="field">
-      <label for="comments">Précisions (facultatif)</label>
-      <textarea id="comments" rows="2"
-        placeholder="Informations complémentaires"></textarea>
-    </div>
-
-    <button onclick="prepareOrder()">Préparer ma commande</button>
-
-    <p class="note" id="orderStatus"></p>
-
-    <textarea id="orderSummary" class="hidden"
-      rows="10" readonly></textarea>
-
-    <button id="copyOrder" class="hidden secondary"
-      onclick="copyOrder()">Copier le récapitulatif</button>
+    <button onclick="sendOrder()">Confirmer ma commande sur Telegram</button>
+    <p class="small">La commande sera préparée pour être envoyée dans Telegram.</p>
   </section>
-
 </main>
 
 <script>
+const SELLER_USERNAME = "TON_PSEUDO_TELEGRAM";
 
-// =====================================
-//                   LABO EXPRESS 57
-// =====================================
-
-const CONFIG = {
-  title: "LABO EXPRESS 57🥇",
-
-  categories: [
-    {
-      name: "LABO HASH🍫🍀",
-      image: "categorie2.jpg.JPG",
-
-      products: [
-        {
-          id: "p1",
-          name: "JAUNE🪵",
-          video: "Video🪵.MOV",
-          description: "C du jaune mais sous-estimez pas la famille 
- pas 1.",
-
-          prices: [
-            { quantity: 4G, price: 20 },
-            { quantity: 10G, price: 50 },
-            { quantity: 25G, price: 150 }
-          ]
-        },
-
-        {
-          id: "p2",
-          name: "FILTRER🍫",
-          video: "Video🍫.MOV",
-          description: "Filtrer sortie tout droit du Maroc🇲🇦 
-2.",
-
-          prices: [
-            { quantity: 2,5G, price: 20 },
-            { quantity: 5G, price: 40 }
-            { quantity: 10G, price: 70 }
-          ]
-        },
-
-        {
-          id: "p3",
-          name: "Amnesia🍀",
-          video: "Video🍀.MOV",
-          description: "GOUTE ET JUGE
-3.",
-
-          prices: [
-            { quantity: 2G, price: 20 },
-            { quantity: 5G, price: 40 }
-            { quantity: 10G, price: 80 },
-          ]
-        }
-      ]
-    },
-
-    {
-      name: "LABO MASH❄️",
-      image: "categorie2.jpg.JPG",
-
-      products: [
-        {
-          id: "p4",
-          name: "COCO❄️🐟",
-          video: "Video❄️.MOV",
-          description: "D’ECAILLE DE POISSON 0.9
-4.",
-          prices: [
-            { quantity: 0,15, price: 10 },
-            { quantity: 0,5, price: 30 }
-            { quantity: 1G, price: 50 },
-            { quantity: 5G, price: 240 },
-            { quantity: 10G, price:480 },
-
-          ]
-        }
-      ]
-    }
+const products = {
+  1: [
+    { id:"p1", name:"Produit 1", video:"video1.mp4",
+      options:[{q:1,p:10},{q:2,p:20},{q:3,p:30}] },
+    { id:"p2", name:"Produit 2", video:"video2.mp4",
+      options:[{q:1,p:10},{q:2,p:20},{q:3,p:30}] },
+    { id:"p3", name:"Produit 3", video:"video3.mp4",
+      options:[{q:1,p:10},{q:2,p:20},{q:3,p:30}] }
+  ],
+  2: [
+    { id:"p4", name:"Produit 4", video:"video4.mp4",
+      options:[{q:1,p:10},{q:2,p:20},{q:3,p:30},
+               {q:4,p:40},{q:5,p:50}] }
   ]
 };
 
-// =====================================
-// FONCTIONNEMENT DE LA BOUTIQUE
-// =====================================
-
-document.getElementById("shopTitle").textContent = CONFIG.title;
-
-let currentCategory = 0;
-let currentProduct = null;
 let cart = [];
 
-function money(value) {
-  return value.toLocaleString("fr-FR") + " €";
-}
-
-function showSection(id) {
-  ["home", "catalog", "detail", "checkout"].forEach(section => {
-    document.getElementById(section).classList.toggle(
-      "hidden", section !== id
-    );
-  });
-
-  window.scrollTo(0, 0);
-}
-
-function showHome() {
-  showSection("home");
-}
-
-function showCatalog() {
-  renderCatalog();
-  showSection("catalog");
-}
-
-function renderCategories() {
-  const container = document.getElementById("categories");
-  container.replaceChildren();
-
-  CONFIG.categories.forEach((category, index) => {
-    const card = document.createElement("div");
-    card.className = "category";
-
-    const img = document.createElement("img");
-    img.src = category.image;
-    img.alt = category.name;
-
-    img.onerror = () => {
-      img.style.display = "none";
-    };
-
-    const title = document.createElement("h3");
-    title.textContent = category.name;
-
-    const button = document.createElement("button");
-    button.textContent = "Voir la catégorie";
-    button.onclick = () => openCategory(index);
-
-    card.append(img, title, button);
-
-    card.onclick = event => {
-      if (event.target !== button) {
-        openCategory(index);
-      }
-    };
-
-    container.appendChild(card);
+function money(n) {
+  return Number(n).toLocaleString("fr-FR", {
+    minimumFractionDigits:2, maximumFractionDigits:2
   });
 }
 
-function openCategory(index) {
-  currentCategory = index;
-  renderCatalog();
-  showSection("catalog");
-}
-
-function renderCatalog() {
-  const category = CONFIG.categories[currentCategory];
-
+function openCategory(number) {
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("products").classList.remove("hidden");
   document.getElementById("categoryTitle").textContent =
-    category.name;
+    number === 1 ? "Catégorie 1" : "Catégorie 2";
 
-  const container = document.getElementById("products");
-  container.replaceChildren();
+  const list = document.getElementById("productList");
+  list.innerHTML = "";
 
-  category.products.forEach(product => {
-    const card = document.createElement("article");
-    card.className = "product";
+  products[number].forEach(product => {
+    const card = document.createElement("div");
+    card.className = "card";
 
-    // VIDÉO DU PRODUIT : AUCUNE IMAGE
+    const title = document.createElement("h2");
+    title.textContent = product.name;
+
     const video = document.createElement("video");
-    video.src = product.video;
     video.controls = true;
     video.playsInline = true;
     video.preload = "metadata";
+    video.src = product.video;
 
-    const name = document.createElement("h3");
-    name.textContent = product.name;
-
-    const minimum = Math.min(
-      ...product.prices.map(option => option.price)
-    );
-
-    const price = document.createElement("p");
-    price.className = "price";
-    price.textContent = "À partir de " + money(minimum);
-
-    const button = document.createElement("button");
-    button.textContent = "Choisir ce produit";
-    button.onclick = () => openProduct(product);
-
-    card.append(video, name, price, button);
-    container.appendChild(card);
-  });
-}
-
-function openProduct(product) {
-  currentProduct = product;
-
-  const container = document.getElementById("detailContent");
-  container.replaceChildren();
-
-  const title = document.createElement("h2");
-  title.textContent = product.name;
-
-  // VIDÉO DÉTAILLÉE DU PRODUIT
-  const video = document.createElement("video");
-  video.src = product.video;
-  video.controls = true;
-  video.playsInline = true;
-  video.preload = "metadata";
-
-  const description = document.createElement("p");
-  description.textContent = product.description;
-
-  const label = document.createElement("label");
-  label.textContent = "Choisis une quantité et un prix";
-
-  const select = document.createElement("select");
-  select.id = "selectedPrice";
-
-  product.prices.forEach(option => {
-    const item = document.createElement("option");
-
-    item.value = option.quantity;
-    item.textContent =
-      option.quantity + " — " + money(option.price);
-
-    select.appendChild(item);
-  });
-
-  container.append(title, video, description, label, select);
-  showSection("detail");
-}
-
-function addToCart() {
-  if (!currentProduct) return;
-
-  const quantity = Number(
-    document.getElementById("selectedPrice").value
-  );
-
-  const option = currentProduct.prices.find(
-    p => p.quantity === quantity
-  );
-
-  if (!option) return;
-
-  const existing = cart.find(
-    item => item.id === currentProduct.id
-  );
-
-  if (existing) {
-    existing.quantity = quantity;
-    existing.price = option.price;
-  } else {
-    cart.push({
-      id: currentProduct.id,
-      name: currentProduct.name,
-      quantity: quantity,
-      price: option.price
+    const select = document.createElement("select");
+    product.options.forEach((option, index) => {
+      const item = document.createElement("option");
+      item.value = index;
+      item.textContent =
+        option.q + " — " + money(option.p) + " €";
+      select.appendChild(item);
     });
-  }
 
-  renderCart();
-  showSection("checkout");
+    const add = document.createElement("button");
+    add.textContent = "Ajouter au panier";
+    add.onclick = () => {
+      const option = product.options[Number(select.value)];
+      cart.push({
+        id: product.id,
+        name: product.name,
+        q: option.q,
+        price: option.p
+      });
+      renderCart();
+      add.textContent = "Ajouté ✓";
+      setTimeout(() => add.textContent = "Ajouter au panier", 1200);
+    };
+
+    card.append(title, video, select, add);
+    list.appendChild(card);
+  });
+}
+
+function showHome() {
+  document.getElementById("home").classList.remove("hidden");
+  document.getElementById("products").classList.add("hidden");
 }
 
 function renderCart() {
-  const container = document.getElementById("cartItems");
-  container.replaceChildren();
+  const box = document.getElementById("cartItems");
+  box.innerHTML = "";
 
-  cart.forEach((item, index) => {
-    const line = document.createElement("div");
-    line.className = "order-line";
+  if (!cart.length) {
+    box.textContent = "Ton panier est vide.";
+  } else {
+    cart.forEach((item, index) => {
+      const line = document.createElement("p");
+      line.textContent = item.name + " — quantité " + item.q +
+        " — " + money(item.price) + " € ";
 
-    const text = document.createElement("p");
-    text.textContent =
-      item.name + " x" + item.quantity + " : " +
-      money(item.price);
+      const remove = document.createElement("button");
+      remove.textContent = "Retirer";
+      remove.onclick = () => {
+        cart.splice(index, 1);
+        renderCart();
+      };
 
-    const remove = document.createElement("button");
-    remove.className = "secondary";
-    remove.textContent = "Retirer";
+      line.appendChild(remove);
+      box.appendChild(line);
+    });
+  }
 
-    remove.onclick = () => {
-      cart.splice(index, 1);
-      renderCart();
-    };
+  document.getElementById("total").textContent =
+    money(cart.reduce((sum, item) => sum + item.price, 0));
+}
 
-    line.append(text, remove);
-    container.appendChild(line);
+function checkout() {
+  if (!cart.length) {
+    alert("Ajoute au moins un produit au panier.");
+    return;
+  }
+  document.getElementById("checkoutSection").classList.remove("hidden");
+  document.getElementById("checkoutSection").scrollIntoView({
+    behavior:"smooth"
   });
+}
 
-  const total = cart.reduce(
-    (sum, item) => sum + item.price, 0
-  );
-
-  document.getElementById("cartTotal").textContent =
-    "Total : " + money(total);
+function showCart() {
+  document.getElementById("checkoutSection").classList.add("hidden");
 }
 
 function toggleAddress() {
-  const delivery =
-    document.getElementById("method").value === "Livraison";
-
-  document.getElementById("addressField").classList.toggle(
-    "hidden", !delivery
+  const mode = document.querySelector('input[name="mode"]:checked');
+  document.getElementById("addressBox").classList.toggle(
+    "hidden", !mode || mode.value !== "Livraison"
   );
 }
 
-function prepareOrder() {
+function sendOrder() {
   if (!cart.length) {
-    document.getElementById("orderStatus").textContent =
-      "Ton panier est vide. Choisis d'abord un produit.";
+    alert("Ton panier est vide.");
     return;
   }
 
-  const method = document.getElementById("method").value;
+  const mode = document.querySelector('input[name="mode"]:checked');
+  if (!mode) {
+    alert("Choisis livraison ou sur place.");
+    return;
+  }
+
   const address = document.getElementById("address").value.trim();
-
-  if (method === "Livraison" && !address) {
-    document.getElementById("orderStatus").textContent =
-      "Ajoute ton adresse de livraison pour continuer.";
+  if (mode.value === "Livraison" && !address) {
+    alert("Entre ton adresse de livraison.");
     return;
   }
 
-  const total = cart.reduce(
-    (sum, item) => sum + item.price, 0
-  );
+  let message = "Bonjour, je souhaite passer commande :\n\n";
+  cart.forEach(item => {
+    message += "• " + item.name + " — quantité " + item.q +
+      " — " + money(item.price) + " €\n";
+  });
+  message += "\nTotal : " +
+    money(cart.reduce((sum, item) => sum + item.price, 0)) + " €";
+  message += "\nMode : " + mode.value;
 
-  let message = "NOUVELLE COMMANDE\n\n";
-
-  message += cart.map(item =>
-    item.name + " x" + item.quantity + " : " +
-    money(item.price)
-  ).join("\n");
-
-  message += "\n\nTOTAL : " + money(total);
-  message += "\nRéception : " + method;
-
-  if (method === "Livraison") {
+  if (mode.value === "Livraison") {
     message += "\nAdresse : " + address;
+    const details = document.getElementById("details").value.trim();
+    if (details) message += "\nPrécisions : " + details;
   }
 
-  const customer =
-    document.getElementById("customer").value.trim();
-
-  const comments =
-    document.getElementById("comments").value.trim();
-
-  if (customer) message += "\nNom : " + customer;
-  if (comments) message += "\nPrécisions : " + comments;
-
-  document.getElementById("orderSummary").value = message;
-
-  document.getElementById("orderSummary").classList.remove(
-    "hidden"
-  );
-
-  document.getElementById("copyOrder").classList.remove(
-    "hidden"
-  );
-
-  document.getElementById("orderStatus").textContent =
-    "Récapitulatif prêt. La connexion Telegram sera configurée ensuite.";
-}
-
-async function copyOrder() {
-  const text = document.getElementById("orderSummary").value;
-
-  try {
-    await navigator.clipboard.writeText(text);
-
-    document.getElementById("orderStatus").textContent =
-      "Récapitulatif copié !";
-  } catch {
-    document.getElementById("orderSummary").select();
-
-    document.getElementById("orderStatus").textContent =
-      "Sélectionne et copie le récapitulatif.";
+  if (SELLER_USERNAME === "TON_PSEUDO_TELEGRAM") {
+    alert("Le site est prêt à être configuré. Il faut encore renseigner le pseudo Telegram du vendeur.");
+    return;
   }
+
+  const url = "https://t.me/" + SELLER_USERNAME.replace("@","") +
+    "?text=" + encodeURIComponent(message);
+
+  window.open(url, "_blank");
 }
 
-renderCategories();
-
+renderCart();
 </script>
 </body>
 </html>
