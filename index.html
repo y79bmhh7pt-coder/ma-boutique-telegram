@@ -376,7 +376,7 @@ function sendOrder() {
   let message = "Bonjour, voici ma commande :\n\n";
   cart.forEach(item => {
     message += "- " + item.name +
-      " | Quantité : " + item.q +
+      " | grammes : " + item.q +
       " | Prix : " + money(item.price) + " €\n";
   });
   const total = cart.reduce((sum, item) => sum + item.price, 0);
