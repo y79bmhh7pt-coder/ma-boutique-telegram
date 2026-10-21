@@ -1,1 +1,630 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Boutique</title>
 
+<style>
+:root {
+  --yellow: #ffd400;
+  --black: #080808;
+  --panel: #171717;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--black);
+  color: white;
+}
+
+header {
+  text-align: center;
+  padding: 24px 12px;
+  background: linear-gradient(#000000b8, #080808);
+  border-bottom: 2px solid var(--yellow);
+}
+
+header h1 {
+  color: var(--yellow);
+  margin: 0 0 8px;
+}
+
+header p { color: #ccc; }
+
+main {
+  max-width: 850px;
+  padding: 18px;
+  margin: auto;
+}
+
+h2 { color: var(--yellow); }
+
+.categories, .products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.category, .product {
+  background: var(--panel);
+  border: 1px solid #333;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.category {
+  cursor: pointer;
+  text-align: center;
+  padding-bottom: 12px;
+}
+
+.category img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+
+.category h3 { margin: 12px 4px; }
+
+.product { padding-bottom: 14px; }
+
+.product video {
+  width: 100%;
+  display: block;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #222;
+}
+
+.product h3, .product p { margin: 12px; }
+
+.price {
+  color: var(--yellow);
+  font-size: 19px;
+  font-weight: bold;
+}
+
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  background: var(--yellow);
+  color: #111;
+}
+
+.category button { margin-top: 4px; }
+
+.product button {
+  width: calc(100% - 24px);
+  margin: 0 12px;
+}
+
+.secondary {
+  background: #292929;
+  color: white;
+  border: 1px solid #555;
+}
+
+.hidden { display: none !important; }
+
+label {
+  display: block;
+  margin: 16px 0 7px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 13px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #171717;
+  color: white;
+  font: inherit;
+}
+
+textarea { resize: vertical; }
+
+.field { margin-bottom: 14px; }
+
+.order-line {
+  border-bottom: 1px solid #333;
+  padding: 12px 0;
+}
+
+.total {
+  color: var(--yellow);
+  font-size: 23px;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+.note {
+  color: #bbb;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  main { padding: 12px; }
+  .categories, .products { gap: 9px; }
+  .category h3, .product h3 { font-size: 15px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1 id="shopTitle">LABO EXPRESS 57</h1>
+  <p>Découvre notre sélection</p>
+</header>
+
+<main>
+
+  <section id="home">
+    <h2>Nos catégories</h2>
+    <div class="categories" id="categories"></div>
+  </section>
+
+  <section id="catalog" class="hidden">
+    <button class="secondary" onclick="showHome()">← Retour</button>
+    <h2 id="categoryTitle"></h2>
+    <div class="products" id="products"></div>
+  </section>
+
+  <section id="detail" class="hidden">
+    <button class="secondary" onclick="showCatalog()">
+      ← Retour aux produits
+    </button>
+    <div id="detailContent"></div>
+    <button onclick="addToCart()">Ajouter au panier</button>
+  </section>
+
+  <section id="checkout" class="hidden">
+    <button class="secondary" onclick="showHome()">
+      ← Retour à la boutique
+    </button>
+
+    <h2>Mon panier</h2>
+    <div id="cartItems"></div>
+    <div class="total" id="cartTotal">Total : 0 €</div>
+
+    <h2>Réception</h2>
+
+    <div class="field">
+      <label for="method">Mode de réception</label>
+      <select id="method" onchange="toggleAddress()">
+        <option value="Sur place">Sur place</option>
+        <option value="Livraison">Livraison</option>
+      </select>
+    </div>
+
+    <div class="field hidden" id="addressField">
+      <label for="address">Adresse de livraison</label>
+      <textarea id="address" rows="3"
+        placeholder="Adresse complète"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="customer">Nom ou prénom (facultatif)</label>
+      <input id="customer" placeholder="Ton prénom">
+    </div>
+
+    <div class="field">
+      <label for="comments">Précisions (facultatif)</label>
+      <textarea id="comments" rows="2"
+        placeholder="Informations complémentaires"></textarea>
+    </div>
+
+    <button onclick="prepareOrder()">Préparer ma commande</button>
+
+    <p class="note" id="orderStatus"></p>
+
+    <textarea id="orderSummary" class="hidden"
+      rows="10" readonly></textarea>
+
+    <button id="copyOrder" class="hidden secondary"
+      onclick="copyOrder()">Copier le récapitulatif</button>
+  </section>
+
+</main>
+
+<script>
+
+// =====================================
+//                   LABO EXPRESS 57
+// =====================================
+
+const CONFIG = {
+  title: "LABO EXPRESS 57🥇",
+
+  categories: [
+    {
+      name: "LABO HASH🍫🍀",
+      image: "categorie1.jpg.JPG",
+
+      products: [
+        {
+          id: "p1",
+          name: "JAUNE🪵",
+          video: "Video🪵.MOV",
+          description: "C du jaune mais sous-estimez pas la famille 
+ pas 1.",
+
+          prices: [
+            { quantity: 4G, price: 20 },
+            { quantity: 10G, price: 50 },
+            { quantity: 25G, price: 150 }
+          ]
+        },
+
+        {
+          id: "p2",
+          name: "FILTRER🍫",
+          video: "Video🍫.MOV",
+          description: "Filtrer sortie tout droit du Maroc🇲🇦 
+2.",
+
+          prices: [
+            { quantity: 2,5G, price: 20 },
+            { quantity: 5G, price: 40 }
+            { quantity: 10G, price: 70 }
+          ]
+        },
+
+        {
+          id: "p3",
+          name: "Amnesia🍀",
+          video: "Video🍀.MOV",
+          description: "GOUTE ET JUGE
+3.",
+
+          prices: [
+            { quantity: 2G, price: 20 },
+            { quantity: 5G, price: 40 }
+            { quantity: 10G, price: 80 },
+          ]
+        }
+      ]
+    },
+
+    {
+      name: "LABO MASH❄️",
+      image: "categorie2.jpg.JPG",
+
+      products: [
+        {
+          id: "p4",
+          name: "COCO❄️🐟",
+          video: "Video❄️.MOV",
+          description: "D’ECAILLE DE POISSON 0.9
+4.",
+          prices: [
+            { quantity: 0,15, price: 10 },
+            { quantity: 0,5, price: 30 }
+            { quantity: 1G, price: 50 },
+            { quantity: 5G, price: 240 },
+            { quantity: 10G, price:480 },
+
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+// =====================================
+// FONCTIONNEMENT DE LA BOUTIQUE
+// =====================================
+
+document.getElementById("shopTitle").textContent = CONFIG.title;
+
+let currentCategory = 0;
+let currentProduct = null;
+let cart = [];
+
+function money(value) {
+  return value.toLocaleString("fr-FR") + " €";
+}
+
+function showSection(id) {
+  ["home", "catalog", "detail", "checkout"].forEach(section => {
+    document.getElementById(section).classList.toggle(
+      "hidden", section !== id
+    );
+  });
+
+  window.scrollTo(0, 0);
+}
+
+function showHome() {
+  showSection("home");
+}
+
+function showCatalog() {
+  renderCatalog();
+  showSection("catalog");
+}
+
+function renderCategories() {
+  const container = document.getElementById("categories");
+  container.replaceChildren();
+
+  CONFIG.categories.forEach((category, index) => {
+    const card = document.createElement("div");
+    card.className = "category";
+
+    const img = document.createElement("img");
+    img.src = category.image;
+    img.alt = category.name;
+
+    img.onerror = () => {
+      img.style.display = "none";
+    };
+
+    const title = document.createElement("h3");
+    title.textContent = category.name;
+
+    const button = document.createElement("button");
+    button.textContent = "Voir la catégorie";
+    button.onclick = () => openCategory(index);
+
+    card.append(img, title, button);
+
+    card.onclick = event => {
+      if (event.target !== button) {
+        openCategory(index);
+      }
+    };
+
+    container.appendChild(card);
+  });
+}
+
+function openCategory(index) {
+  currentCategory = index;
+  renderCatalog();
+  showSection("catalog");
+}
+
+function renderCatalog() {
+  const category = CONFIG.categories[currentCategory];
+
+  document.getElementById("categoryTitle").textContent =
+    category.name;
+
+  const container = document.getElementById("products");
+  container.replaceChildren();
+
+  category.products.forEach(product => {
+    const card = document.createElement("article");
+    card.className = "product";
+
+    // VIDÉO DU PRODUIT : AUCUNE IMAGE
+    const video = document.createElement("video");
+    video.src = product.video;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+
+    const name = document.createElement("h3");
+    name.textContent = product.name;
+
+    const minimum = Math.min(
+      ...product.prices.map(option => option.price)
+    );
+
+    const price = document.createElement("p");
+    price.className = "price";
+    price.textContent = "À partir de " + money(minimum);
+
+    const button = document.createElement("button");
+    button.textContent = "Choisir ce produit";
+    button.onclick = () => openProduct(product);
+
+    card.append(video, name, price, button);
+    container.appendChild(card);
+  });
+}
+
+function openProduct(product) {
+  currentProduct = product;
+
+  const container = document.getElementById("detailContent");
+  container.replaceChildren();
+
+  const title = document.createElement("h2");
+  title.textContent = product.name;
+
+  // VIDÉO DÉTAILLÉE DU PRODUIT
+  const video = document.createElement("video");
+  video.src = product.video;
+  video.controls = true;
+  video.playsInline = true;
+  video.preload = "metadata";
+
+  const description = document.createElement("p");
+  description.textContent = product.description;
+
+  const label = document.createElement("label");
+  label.textContent = "Choisis une quantité et un prix";
+
+  const select = document.createElement("select");
+  select.id = "selectedPrice";
+
+  product.prices.forEach(option => {
+    const item = document.createElement("option");
+
+    item.value = option.quantity;
+    item.textContent =
+      option.quantity + " — " + money(option.price);
+
+    select.appendChild(item);
+  });
+
+  container.append(title, video, description, label, select);
+  showSection("detail");
+}
+
+function addToCart() {
+  if (!currentProduct) return;
+
+  const quantity = Number(
+    document.getElementById("selectedPrice").value
+  );
+
+  const option = currentProduct.prices.find(
+    p => p.quantity === quantity
+  );
+
+  if (!option) return;
+
+  const existing = cart.find(
+    item => item.id === currentProduct.id
+  );
+
+  if (existing) {
+    existing.quantity = quantity;
+    existing.price = option.price;
+  } else {
+    cart.push({
+      id: currentProduct.id,
+      name: currentProduct.name,
+      quantity: quantity,
+      price: option.price
+    });
+  }
+
+  renderCart();
+  showSection("checkout");
+}
+
+function renderCart() {
+  const container = document.getElementById("cartItems");
+  container.replaceChildren();
+
+  cart.forEach((item, index) => {
+    const line = document.createElement("div");
+    line.className = "order-line";
+
+    const text = document.createElement("p");
+    text.textContent =
+      item.name + " x" + item.quantity + " : " +
+      money(item.price);
+
+    const remove = document.createElement("button");
+    remove.className = "secondary";
+    remove.textContent = "Retirer";
+
+    remove.onclick = () => {
+      cart.splice(index, 1);
+      renderCart();
+    };
+
+    line.append(text, remove);
+    container.appendChild(line);
+  });
+
+  const total = cart.reduce(
+    (sum, item) => sum + item.price, 0
+  );
+
+  document.getElementById("cartTotal").textContent =
+    "Total : " + money(total);
+}
+
+function toggleAddress() {
+  const delivery =
+    document.getElementById("method").value === "Livraison";
+
+  document.getElementById("addressField").classList.toggle(
+    "hidden", !delivery
+  );
+}
+
+function prepareOrder() {
+  if (!cart.length) {
+    document.getElementById("orderStatus").textContent =
+      "Ton panier est vide. Choisis d'abord un produit.";
+    return;
+  }
+
+  const method = document.getElementById("method").value;
+  const address = document.getElementById("address").value.trim();
+
+  if (method === "Livraison" && !address) {
+    document.getElementById("orderStatus").textContent =
+      "Ajoute ton adresse de livraison pour continuer.";
+    return;
+  }
+
+  const total = cart.reduce(
+    (sum, item) => sum + item.price, 0
+  );
+
+  let message = "NOUVELLE COMMANDE\n\n";
+
+  message += cart.map(item =>
+    item.name + " x" + item.quantity + " : " +
+    money(item.price)
+  ).join("\n");
+
+  message += "\n\nTOTAL : " + money(total);
+  message += "\nRéception : " + method;
+
+  if (method === "Livraison") {
+    message += "\nAdresse : " + address;
+  }
+
+  const customer =
+    document.getElementById("customer").value.trim();
+
+  const comments =
+    document.getElementById("comments").value.trim();
+
+  if (customer) message += "\nNom : " + customer;
+  if (comments) message += "\nPrécisions : " + comments;
+
+  document.getElementById("orderSummary").value = message;
+
+  document.getElementById("orderSummary").classList.remove(
+    "hidden"
+  );
+
+  document.getElementById("copyOrder").classList.remove(
+    "hidden"
+  );
+
+  document.getElementById("orderStatus").textContent =
+    "Récapitulatif prêt. La connexion Telegram sera configurée ensuite.";
+}
+
+async function copyOrder() {
+  const text = document.getElementById("orderSummary").value;
+
+  try {
+    await navigator.clipboard.writeText(text);
+
+    document.getElementById("orderStatus").textContent =
+      "Récapitulatif copié !";
+  } catch {
+    document.getElementById("orderSummary").select();
+
+    document.getElementById("orderStatus").textContent =
+      "Sélectionne et copie le récapitulatif.";
+  }
+}
+
+renderCategories();
+
+</script>
+</body>
+</html>
