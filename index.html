@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ma boutique</title>
+<title>LABO EXPRESS 57</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root {
@@ -17,8 +16,7 @@ body {
   margin: 0;
   color: white;
   background: #080808;
-  background-image: linear-gradient(#0009,#000d),
-    url("fond.jpg");
+  background-image: linear-gradient(#0009,#000d), url("fond.jpg");
   background-position: center;
   background-size: cover;
   background-attachment: fixed;
@@ -30,7 +28,11 @@ header {
 }
 h1 { color: var(--yellow); margin: 0; }
 h2 { font-size: 21px; }
-main { max-width: 700px; margin: auto; padding: 12px; }
+main {
+  max-width: 700px;
+  margin: auto;
+  padding: 12px;
+}
 button, select {
   padding: 12px;
   border: 0;
@@ -81,11 +83,35 @@ video {
   border-radius: 10px;
   object-fit: contain;
 }
-select { width: 100%; margin: 10px 0; }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.actions button { flex: 1; }
-.total { color: var(--yellow); font-size: 21px; font-weight: bold; }
-input {
+select {
+  width: 100%;
+  margin: 10px 0;
+  background: white;
+  color: black;
+}
+.card button { width: 100%; }
+.cart-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #444;
+}
+.cart-line span { overflow-wrap: anywhere; }
+.cart-line button {
+  flex-shrink: 0;
+  padding: 8px;
+  background: #333;
+  color: white;
+}
+.total {
+  color: var(--yellow);
+  font-size: 21px;
+  font-weight: bold;
+}
+input:not([type="radio"]) {
   width: 100%;
   padding: 12px;
   margin: 7px 0;
@@ -94,16 +120,24 @@ input {
   background: #101010;
   color: white;
 }
-.hidden { display: none !important; }
+input[type="radio"] { accent-color: var(--yellow); }
+label { display: block; margin: 12px 0; }
 .small { color: #ccc; font-size: 13px; }
+.hidden { display: none !important; }
+#cartSection > button,
+#checkoutSection > button:last-of-type {
+  width: 100%;
+}
+@media (max-width: 380px) {
+  .categories { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
 <header>
-  <h1>LAbo express 57</h1>
+  <h1>LABO EXPRESS 57</h1>
   <p>Choisis tes produits et passe commande</p>
 </header>
-
 <main>
   <section id="home">
     <h2>Nos catégories</h2>
@@ -111,105 +145,143 @@ input {
       <button class="category"
         style="background-image:linear-gradient(#0002,#0008),url('categorie1.jpg')"
         onclick="openCategory(1)">
-        <span>LABO Hash🍫🍀</span>
+        <span>LABO HASH🍫🍀</span>
       </button>
       <button class="category"
         style="background-image:linear-gradient(#0002,#0008),url('categorie2.jpg')"
         onclick="openCategory(2)">
-        <span>LAbo mash❄️</span>
+        <span>LABO MASH❄️</span>
       </button>
     </div>
   </section>
-
   <section id="products" class="hidden">
     <button class="back" onclick="showHome()">← Retour</button>
     <h2 id="categoryTitle"></h2>
     <div id="productList"></div>
   </section>
-
   <section id="cartSection" class="cart">
     <h2>🛒 Mon panier</h2>
     <div id="cartItems">Ton panier est vide.</div>
     <p class="total">Total : <span id="total">0,00</span> €</p>
     <button onclick="checkout()">Commander</button>
   </section>
-
   <section id="checkoutSection" class="cart hidden">
     <button class="back" onclick="showCart()">← Retour au panier</button>
     <h2>📦 Mode de commande</h2>
-    <label><input type="radio" name="mode" value="Livraison"
-      onchange="toggleAddress()"> Livraison</label>
-    <label><input type="radio" name="mode" value="Sur place"
-      onchange="toggleAddress()"> Sur place</label>
+    <label>
+      <input type="radio" name="mode" value="Livraison"
+        onchange="toggleAddress()">
+      Livraison
+    </label>
+    <label>
+      <input type="radio" name="mode" value="Retrait sur place"
+        onchange="toggleAddress()">
+      Retrait sur place
+    </label>
     <div id="addressBox" class="hidden">
-      <label>Adresse de livraison</label>
+      <label for="address">Adresse de livraison</label>
       <input id="address" placeholder="Ton adresse">
-      <label>Précisions (facultatif)</label>
+      <label for="details">Précisions (facultatif)</label>
       <input id="details" placeholder="Bâtiment, étage...">
     </div>
-    <button onclick="sendOrder()">Confirmer ma commande sur Telegram</button>
-    <p class="small">La commande sera préparée pour être envoyée dans Telegram.</p>
+    <button onclick="sendOrder()">Préparer la commande dans Telegram</button>
+    <p class="small">
+      Vérifie ta commande avant de l'envoyer dans Telegram.
+    </p>
   </section>
 </main>
-
 <script>
 const SELLER_USERNAME = "TON_PSEUDO_TELEGRAM";
-
+/* PRODUITS ET PRIX MODIFIABLES */
 const products = {
   1: [
-    { id:"p1", name:"Jaune", video:"video1.mp4",
-      options:[{q:4,p:20},{q:10,p:50},{q:25,p:150}] },
-    { id:"p2", name:"Filtre", video:"video2.mp4",
-      options:[{q:2.5,p:20},{q:5,p:40},{q:10,p:70}] },
-    { id:"p3", name:"Amnésia", video:"video3.mp4",
-      options:[{q:2,p:20},{q:5,p:50},{q:10,p:80}] }
+    {
+      id: "p1",
+      name: "Jaune🪵",
+      video: "video1.mp4",
+      options: [
+        { q: 4, p: 20 },
+        { q: 10, p: 50 },
+        { q: 25, p: 100 }
+      ]
+    },
+    {
+      id: "p2",
+      name: "FILTRE🍫",
+      video: "video2.mp4",
+      options: [
+        { q: 2.5, p: 20 },
+        { q: 5, p: 40 },
+        { q: 10, p: 70 }
+      ]
+    },
+    {
+      id: "p3",
+      name: "Amnesia🍀",
+      video: "video3.mp4",
+      options: [
+        { q: 2, p: 20 },
+        { q: 5, p: 50 },
+        { q: 10, p: 80 }
+      ]
+    }
   ],
   2: [
-    { id:"p4", name:"Produit 4", video:"video4.mp4",
-      options:[{q:1,p:10},{q:2,p:20},{q:3,p:30},
-               {q:4,p:40},{q:5,p:50}] }
+    {
+      id: "p4",
+      name: "COCO❄️🐟",
+      video: "video4.mp4",
+      options: [
+        { q: 0.15, p: 10 },
+        { q: 0.5, p: 30 },
+        { q: 1, p: 50 },
+        { q: 5, p: 240 },
+        { q: 10, p: 480 }
+      ]
+    }
   ]
 };
-
 let cart = [];
-
 function money(n) {
   return Number(n).toLocaleString("fr-FR", {
-    minimumFractionDigits:2, maximumFractionDigits:2
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
 }
-
 function openCategory(number) {
   document.getElementById("home").classList.add("hidden");
   document.getElementById("products").classList.remove("hidden");
   document.getElementById("categoryTitle").textContent =
     number === 1 ? "Catégorie 1" : "Catégorie 2";
-
   const list = document.getElementById("productList");
   list.innerHTML = "";
-
   products[number].forEach(product => {
     const card = document.createElement("div");
     card.className = "card";
-
     const title = document.createElement("h2");
     title.textContent = product.name;
-
     const video = document.createElement("video");
     video.controls = true;
     video.playsInline = true;
     video.preload = "metadata";
     video.src = product.video;
-
+    video.onerror = () => {
+      video.style.display = "none";
+      const warning = document.createElement("p");
+      warning.className = "small";
+      warning.textContent =
+        "Vidéo introuvable : vérifie le nom du fichier sur GitHub.";
+      card.insertBefore(warning, select);
+    };
     const select = document.createElement("select");
+    select.setAttribute("aria-label", "Choisir une quantité et un prix");
     product.options.forEach((option, index) => {
       const item = document.createElement("option");
       item.value = index;
       item.textContent =
-        option.q + " — " + money(option.p) + " €";
+        option.q + " unité(s) — " + money(option.p) + " €";
       select.appendChild(item);
     });
-
     const add = document.createElement("button");
     add.textContent = "Ajouter au panier";
     add.onclick = () => {
@@ -222,113 +294,109 @@ function openCategory(number) {
       });
       renderCart();
       add.textContent = "Ajouté ✓";
-      setTimeout(() => add.textContent = "Ajouter au panier", 1200);
+      setTimeout(() => {
+        add.textContent = "Ajouter au panier";
+      }, 1000);
     };
-
     card.append(title, video, select, add);
     list.appendChild(card);
   });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
-
 function showHome() {
   document.getElementById("home").classList.remove("hidden");
   document.getElementById("products").classList.add("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
-
 function renderCart() {
   const box = document.getElementById("cartItems");
   box.innerHTML = "";
-
-  if (!cart.length) {
+  if (cart.length === 0) {
     box.textContent = "Ton panier est vide.";
   } else {
     cart.forEach((item, index) => {
-      const line = document.createElement("p");
-      line.textContent = item.name + " — quantité " + item.q +
-        " — " + money(item.price) + " € ";
-
+      const line = document.createElement("div");
+      line.className = "cart-line";
+      const text = document.createElement("span");
+      text.textContent =
+        item.name + " — " + item.q + " unité(s) — " +
+        money(item.price) + " €";
       const remove = document.createElement("button");
       remove.textContent = "Retirer";
       remove.onclick = () => {
         cart.splice(index, 1);
         renderCart();
       };
-
-      line.appendChild(remove);
+      line.append(text, remove);
       box.appendChild(line);
     });
   }
-
-  document.getElementById("total").textContent =
-    money(cart.reduce((sum, item) => sum + item.price, 0));
+  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  document.getElementById("total").textContent = money(total);
 }
-
 function checkout() {
-  if (!cart.length) {
+  if (cart.length === 0) {
     alert("Ajoute au moins un produit au panier.");
     return;
   }
   document.getElementById("checkoutSection").classList.remove("hidden");
   document.getElementById("checkoutSection").scrollIntoView({
-    behavior:"smooth"
+    behavior: "smooth"
   });
 }
-
 function showCart() {
   document.getElementById("checkoutSection").classList.add("hidden");
+  document.getElementById("cartSection").scrollIntoView({
+    behavior: "smooth"
+  });
 }
-
 function toggleAddress() {
   const mode = document.querySelector('input[name="mode"]:checked');
   document.getElementById("addressBox").classList.toggle(
-    "hidden", !mode || mode.value !== "Livraison"
+    "hidden",
+    !mode || mode.value !== "Livraison"
   );
 }
-
 function sendOrder() {
-  if (!cart.length) {
+  if (cart.length === 0) {
     alert("Ton panier est vide.");
     return;
   }
-
   const mode = document.querySelector('input[name="mode"]:checked');
   if (!mode) {
-    alert("Choisis livraison ou sur place.");
+    alert("Choisis la livraison ou le retrait sur place.");
     return;
   }
-
   const address = document.getElementById("address").value.trim();
+  const details = document.getElementById("details").value.trim();
   if (mode.value === "Livraison" && !address) {
     alert("Entre ton adresse de livraison.");
     return;
   }
-
-  let message = "Bonjour, je souhaite passer commande :\n\n";
+  let message = "Bonjour, voici ma commande :\n\n";
   cart.forEach(item => {
-    message += "• " + item.name + " — quantité " + item.q +
-      " — " + money(item.price) + " €\n";
+    message += "- " + item.name +
+      " | Quantité : " + item.q +
+      " | Prix : " + money(item.price) + " €\n";
   });
-  message += "\nTotal : " +
-    money(cart.reduce((sum, item) => sum + item.price, 0)) + " €";
+  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  message += "\nTotal : " + money(total) + " €";
   message += "\nMode : " + mode.value;
-
   if (mode.value === "Livraison") {
     message += "\nAdresse : " + address;
-    const details = document.getElementById("details").value.trim();
-    if (details) message += "\nPrécisions : " + details;
+    if (details) {
+      message += "\nPrécisions : " + details;
+    }
   }
-
-  if (SELLER_USERNAME === "TON_PSEUDO_TELEGRAM") {
-    alert("Le site est prêt à être configuré. Il faut encore renseigner le pseudo Telegram du vendeur.");
+  const username = SELLER_USERNAME.replace(/^@/, "").trim();
+  if (!username || username === "TON_PSEUDO_TELEGRAM") {
+    alert("Ajoute le pseudo Telegram du vendeur dans le code.");
     return;
   }
-
-  const url = "https://t.me/" + SELLER_USERNAME.replace("@","") +
+  const url = "https://t.me/" + username +
     "?text=" + encodeURIComponent(message);
-
-  window.open(url, "_blank");
+  window.location.href = url;
 }
-
 renderCart();
 </script>
 </body>
