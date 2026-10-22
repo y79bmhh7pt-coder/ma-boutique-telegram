@@ -399,6 +399,10 @@ function sendOrder() {
   message += "\nTotal : " + money(total) + " €";
   message += "\nMode : " + mode.value;
   if (mode.value === "Livraison") {
+    message += "\n🚚 Frais de livraison en supplément.";
+
+    message += "\nLe prix sera communiqué en privé selon votre adresse.";
+
     message += "\nAdresse : " + address;
     if (details) {
       message += "\nPrécisions : " + details;
