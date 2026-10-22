@@ -258,23 +258,29 @@ function openCategory(number) {
   document.getElementById("categoryTitle").textContent =
     number === 1 ? "Catégorie 1" : "Catégorie 2";
   const list = document.getElementById("productList");
-  list.innerHTML = "";
-  products[number].forEach(product => {
-    const card = document.createElement("div");
-    card.className = "card";
-    const title = document.createElement("h2");
-    title.textContent = product.name;
-    const img = document.createElement("img");
-img.src = product.image;
-img.alt = product.name;
+  
+list.innerHTML = "";
+products[number].forEach(product => {
+  const card = document.createElement("div");
+  card.className = "card";
 
-const video = document.createElement("video");
-video.controls = true;
-video.playsInline = true;
-    video.controls = true;
-    video.playsInline = true;
-    video.preload = "metadata";
-    video.src = product.video;
+  const title = document.createElement("h2");
+  title.textContent = product.name;
+
+  const img = document.createElement("img");
+  img.src = product.image;
+  img.alt = product.name;
+  img.style.width = "100%";
+  img.style.height = "320px";
+  img.style.objectFit = "contain";
+  img.style.borderRadius = "10px";
+
+  const video = document.createElement("video");
+  video.controls = true;
+  video.playsInline = true;
+  video.preload = "metadata";
+  video.src = product.video;
+
     video.onerror = () => {
       video.style.display = "none";
       const warning = document.createElement("p");
