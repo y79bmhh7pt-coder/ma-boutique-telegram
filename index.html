@@ -264,7 +264,13 @@ function openCategory(number) {
     card.className = "card";
     const title = document.createElement("h2");
     title.textContent = product.name;
-    const video = document.createElement("video");
+    const img = document.createElement("img");
+img.src = product.image;
+img.alt = product.name;
+
+const video = document.createElement("video");
+video.controls = true;
+video.playsInline = true;
     video.controls = true;
     video.playsInline = true;
     video.preload = "metadata";
@@ -302,7 +308,7 @@ function openCategory(number) {
         add.textContent = "Ajouter au panier";
       }, 1000);
     };
-    card.append(title, video, select, add);
+    card.append(title, img, video, select, add);
     list.appendChild(card);
   });
   window.scrollTo({ top: 0, behavior: "smooth" });
