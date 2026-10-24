@@ -288,11 +288,16 @@ products[number].forEach(product => {
   img.style.objectFit = "contain";
   img.style.borderRadius = "10px";
 
-  const video = document.createElement("video");
-  video.controls = true;
-  video.playsInline = true;
-  video.preload = "metadata";
-  video.src = product.video;
+  
+ const video = document.createElement("video");
+ video.controls = false;
+ video.playsInline = true;
+ video.preload = "metadata";
+ video.muted = true;
+ video.src = product.video;
+ video.style.display = "none";
+ video.style.width = "100%";
+ video.style.borderRadius = "12px";
 
     video.onerror = () => {
       video.style.display = "none";
