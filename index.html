@@ -73,13 +73,32 @@ button {
   padding: 9px;
   border-radius: 8px;
 }
-.card, .cart {
+
+#productList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.card {
+  min-width: 0;
+  background: #171717ee;
+  border: 1px solid #ffffff20;
+  border-radius: 15px;
+  padding: 8px;
+  margin: 0;
+  overflow: hidden;
+}
+
+.cart {
   background: #171717ee;
   border: 1px solid #ffffff20;
   border-radius: 15px;
   padding: 13px;
   margin: 12px 0;
 }
+
 video {
   display: block;
   width: 100%;
@@ -284,7 +303,7 @@ products[number].forEach(product => {
   img.src = product.image;
   img.alt = product.name;
   img.style.width = "100%";
-  img.style.height = "320px";
+  img.style.height = "160px";
   img.style.objectFit = "contain";
   img.style.borderRadius = "10px";
 
