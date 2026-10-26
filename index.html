@@ -343,24 +343,65 @@ video.style.objectFit = "contain";
         option.q + " gramme(s) — " + money(option.p) + " €";
       select.appendChild(item);
     });
+    
+    const status = product.status || "disponible";
+
+    if (status === "rupture" || status === "bientot") {
+      const badge = document.createElement("div");
+      badge.textContent = status === "rupture"
+        ? "🚫 RUPTURE"
+        : "⏰ BIENTÔT DISPONIBLE";
+
+      badge.style.cssText = `
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: white;
+        background: ${status === "rupture" ? "#087cff" : "#087cff"};
+        border: 1px solid #39a9ff;
+        box-shadow: 0 0 12px #087cff, inset 0 0 8px #39a9ff;
+        text-shadow: 0 0 8px #ffffff;
+      `;
+
+      card.appendChild(badge);
+
+      img.style.filter = "brightness(0.55)";
+      video.style.filter = "brightness(0.55)";
+    }
+
     const add = document.createElement("button");
-    add.textContent = "Ajouter au panier";
-    add.onclick = () => {
-      const option = product.options[Number(select.value)];
-      cart.push({
-        id: product.id,
-        name: product.name,
-        q: option.q,
-        price: option.p
-      });
-      renderCart();
-      add.textContent = "Ajouté ✓";
-      setTimeout(() => {
-        add.textContent = "Ajouter au panier";
-      }, 1000);
-    };
+
+    if (status === "rupture" || status === "bientot") {
+      add.textContent = status === "rupture"
+        ? "🚫 Indisponible"
+        : "⏰ Bientôt disponible";
+      add.disabled = true;
+      add.style.opacity = "0.5";
+      add.style.cursor = "not-allowed";
+    } else {
+      add.textContent = "Ajouter au panier";
+      add.onclick = () => {
+        const option = product.options[Number(select.value)];
+        cart.push({
+          id: product.id,
+          name: product.name,
+          q: option.q,
+          price: option.p
+        });
+        renderCart();
+        add.textContent = "Ajouté ✓";
+        setTimeout(() => {
+          add.textContent = "Ajouter au panier";
+        }, 1000);
+      };
+    }
+
     card.append(title, img, video, select, add);
     list.appendChild(card);
+
   });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
