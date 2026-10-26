@@ -571,43 +571,61 @@ renderCart();
 </div>
 
 
-<script>
-function toggleMusic() {
-  const panel = document.getElementById("musicPanel");
-  const music = document.getElementById("shopMusic");
 
-  if (panel.style.display === "block") {
-    panel.style.display = "none";
-  } else {
-    panel.style.display = "block";
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-  const music = document.getElementById("shopMusic");
-
-  music.addEventListener("error", function () {
-    console.log("Erreur de lecture du fichier MP3");
-  });
-});
-</script>
 
 </script>
 
 <!-- LECTEUR MUSIQUE LABO EXPRESS 57 -->
+
 <style>
-...
+#musicButton {
+  position: fixed;
+  right: 16px;
+  bottom: 20px;
+  z-index: 9999;
+  width: 52px;
+  height: 52px;
+  border: 2px solid #ffd400;
+  border-radius: 12px;
+  background: #080808;
+  color: #ffd400;
+  font-size: 25px;
+}
+#musicPanel {
+  display: none;
+  position: fixed;
+  right: 16px;
+  bottom: 82px;
+  z-index: 9999;
+  width: min(300px, calc(100vw - 32px));
+  padding: 16px;
+  color: white;
+  background: #171717;
+  border: 1px solid #ffd400;
+  border-radius: 16px;
+}
+#shopMusic { width: 100%; }
 </style>
 
-<button id="musicButton">♫</button>
+<button id="musicButton" onclick="toggleMusic()">♫</button>
 
-<!-- Le reste du lecteur -->
+<div id="musicPanel">
+  <button onclick="toggleMusic()">✕</button>
+  <h3>🎵 LABO EXPRESS 57</h3>
+  <p>Imed zee-horloger4</p>
+  <audio id="shopMusic" controls playsinline preload="none">
+    <source src="Imed%20zee-horloger4.mp3" type="audio/mpeg">
+  </audio>
+</div>
 
 <script>
-...
+function toggleMusic() {
+  const panel = document.getElementById("musicPanel");
+  panel.style.display =
+    panel.style.display === "block" ? "none" : "block";
+}
 </script>
 
+
 </body>
-</html>
-</body>
-</html>
+</html>  
