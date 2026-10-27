@@ -617,15 +617,31 @@ renderCart();
     <source src="Imed%20zee-horloger4.mp3" type="audio/mpeg">
   </audio>
 </div>
-
+ 
 <script>
 function toggleMusic() {
   const panel = document.getElementById("musicPanel");
   panel.style.display =
     panel.style.display === "block" ? "none" : "block";
 }
+
+const shopMusic = document.getElementById("shopMusic");
+
+function startShopMusic() {
+  if (!shopMusic) return;
+
+  shopMusic.play().then(() => {
+    document.removeEventListener("click", startShopMusic);
+    document.removeEventListener("touchstart", startShopMusic);
+  }).catch(() => {});
+}
+
+document.addEventListener("click", startShopMusic);
+document.addEventListener("touchstart", startShopMusic, {
+  passive: true
+});
 </script>
 
-
 </body>
-</html>  
+</html>
+ 
