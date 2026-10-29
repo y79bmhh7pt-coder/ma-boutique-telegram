@@ -105,5 +105,49 @@
       <button disabled>Gestion des produits — bientôt</button>
     </section>
   </main>
+ 
+<script>
+async function validerCommande(reference) {
+  if (!reference) {
+    alert("Référence de commande manquante.");
+    return;
+  }
+
+  const token = prompt(
+    "Colle ton jeton de connexion Supabase (JWT), pas ta clé secrète."
+  );
+
+  if (!token) return;
+
+  const response = await fetch(
+    "https://biiwpfqlpkchuejhstnn.supabase.co/functions/v1/admin-validate-order",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        order_reference: reference
+      })
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    alert("Erreur : " + (result.error || "validation impossible"));
+    return;
+  }
+
+  if (result.success) {
+    alert("Commande validée ! 10 points attribués.");
+  } else {
+    alert("La commande n'a pas été validée : " +
+      (result.error || "erreur inconnue"));
+  }
+}
+</script>
+ 
 </body>
 </html>
