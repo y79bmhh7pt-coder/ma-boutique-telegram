@@ -422,6 +422,13 @@ video.style.objectFit = "contain";
 function showHome() {
   document.getElementById("home").classList.remove("hidden");
   document.getElementById("products").classList.add("hidden");
+  document.getElementById("wheel").classList.add("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+    function openWheel() {
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("products").classList.add("hidden");
+  document.getElementById("wheel").classList.remove("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function renderCart() {
