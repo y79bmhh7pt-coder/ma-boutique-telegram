@@ -54,39 +54,35 @@ loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   message.textContent = 'Connexion...';
 
-  const code = document.querySelector('#password').value;
+  const email = document.querySelector('#email').value.trim();
+  const password = document.querySelector('#password').value;
 
-const response = await fetch(
-  'https://biiwpfqlpkchuejhstnn.supabase.co/functions/v1/admin-login',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_KEY
-    },
-    body: JSON.stringify({ code })
-  }
-);
-
-const result = await response.json();
-
-if (!response.ok || !result.success || !result.session) {
-  message.textContent = result.message || 'Code administrateur refusé';
-  return;
-}
-
-const { error } = await supabase.auth.setSession({
-  access_token: result.session.access_token,
-  refresh_token: result.session.refresh_token
-});
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
 
   if (error) {
     message.textContent = 'Connexion impossible : ' + error.message;
     return;
   }
 
-  await refreshOrders();
+  const { data: admin, error: adminError } = await supabase
+    .from('admin_access')
+    .select('user_id')
+    .eq('user_id', data.user.id)
+    .maybeSingle();
+
+  if (adminError || !admin) {
+    await supabase.auth.signOut();
+    message.textContent = 'Accès administrateur non autorisé.';
+    return;
+  }
+
+  message.textContent = 'Connexion réussie ! Accès administrateur confirmé.';
 });
+
+
 
 logout.addEventListener('click', async () => {
   await supabase.auth.signOut();
