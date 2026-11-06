@@ -302,6 +302,67 @@ const products = {
     }
   ]
 };
+    const WHEEL_COST = 50;
+const PRIZES = [
+  { label: "-5%",       color: "#ffd400" },
+  { label: "Perdu",     color: "#ffffff" },
+  { label: "-10%",      color: "#ffd400" },
+  { label: "Perdu",     color: "#ffffff" },
+  { label: "Cadeau 🎁", color: "#ffd400" },
+  { label: "Rejoue",    color: "#ffffff" }
+];
+const SEG = 360 / PRIZES.length;
+let rot = 0, spinning = false;
+let points = Number(localStorage.getItem("pts") || 100); // TEST seulement
+
+function buildWheel() {
+  const disc = document.getElementById("wheelDisc");
+  disc.style.background = "conic-gradient(" +
+    PRIZES.map((p, i) => `${p.color} ${i*SEG}deg ${(i+1)*SEG}deg`).join(",") + ")";
+  PRIZES.forEach((p, i) => {
+    const l = document.createElement("div");
+    l.className = "wlabel";
+    l.textContent = p.label;
+    l.style.transform = `rotate(${i*SEG + SEG/2 - 90}deg)`;
+    disc.appendChild(l);
+  });
+  document.getElementById("cost").textContent = WHEEL_COST;
+  document.getElementById("pts").textContent = points;
+}
+
+// À REMPLACER plus tard par l'appel Supabase
+async function getSpinResult() {
+  return Math.floor(Math.random() * PRIZES.length);
+}
+
+async function spinWheel() {
+  if (spinning) return;
+  if (points < WHEEL_COST) {
+    alert("Pas assez de points. Commande pour en gagner !");
+    return;
+  }
+  spinning = true;
+  document.getElementById("spinBtn").disabled = true;
+  document.getElementById("wheelResult").textContent = "";
+
+  points -= WHEEL_COST;
+  localStorage.setItem("pts", points);
+  document.getElementById("pts").textContent = points;
+
+  const idx = await getSpinResult();
+  rot = Math.ceil(rot / 360) * 360 + 360 * 5 - (idx * SEG + SEG / 2);
+  document.getElementById("wheelDisc").style.transform = `rotate(${rot}deg)`;
+
+  setTimeout(() => {
+    document.getElementById("wheelResult").textContent =
+      PRIZES[idx].label === "Perdu" ? "Dommage, retente !" : "🎉 Tu as gagné : " + PRIZES[idx].label;
+    spinning = false;
+    document.getElementById("spinBtn").disabled = false;
+  }, 4200);
+}
+
+buildWheel();
+
 let cart = [];
 function money(n) {
   return Number(n).toLocaleString("fr-FR", {
