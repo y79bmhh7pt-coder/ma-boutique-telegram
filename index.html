@@ -195,10 +195,17 @@ label { display: block; margin: 12px 0; }
 </section>
 
 <section id="wheel" class="hidden">
+  <button class="back" onclick="showHome()">← Retour</button>
   <h2>🎡 ROUE DE CHANCE</h2>
-  <p>La roue arrive bientôt !</p>
-  <button onclick="showHome()">⬅️ Retour</button>
+  <p>Tes points : <b id="pts">0</b> (1 tour = <span id="cost">50</span> pts)</p>
+  <div id="wheelBox">
+    <div id="wheelPointer">🔻</div>
+    <div id="wheelDisc"></div>
+  </div>
+  <button id="spinBtn" onclick="spinWheel()" style="width:100%">Tourner la roue</button>
+  <p id="wheelResult" style="text-align:center;font-weight:bold"></p>
 </section>
+
 
 <section id="products" class="hidden">
   <button class="back" onclick="showHome()">← Retour</button>
