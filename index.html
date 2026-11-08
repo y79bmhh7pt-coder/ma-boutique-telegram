@@ -429,6 +429,8 @@ function buildWheel() {
 async function loadMe() {
   try {
     const me = await api("me");
+    alert("Réponse OK, points: " + me.points);
+
     points = me.points;
     prizes = me.prizes;
     wheelCost = me.cost;
