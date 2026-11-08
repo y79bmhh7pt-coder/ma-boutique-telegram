@@ -389,6 +389,89 @@ async function spinWheel() {
 }
 
 buildWheel();
+const API = "https://sdjbcjyrougwgrcgdnkr.supabase.co/functions/v1/api";
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+async function api(action, data = {}) {
+  const r = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, initData: tg ? tg.initData : "", ...data })
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || "Erreur");
+  return j;
+}
+
+let prizes = [];
+let wheelCost = 60;
+
+function buildWheel() {
+  const disc = document.getElementById("wheelDisc");
+  disc.innerHTML = "";
+  document.getElementById("cost").textContent = wheelCost;
+  document.getElementById("pts").textContent = points;
+  if (!prizes.length) return;
+  const seg = 360 / prizes.length;
+  disc.style.background = "conic-gradient(" +
+    prizes.map((p, i) => `${p.color} ${i*seg}deg ${(i+1)*seg}deg`).join(",") + ")";
+  prizes.forEach((p, i) => {
+    const l = document.createElement("div");
+    l.className = "wlabel";
+    l.textContent = p.label;
+    l.style.color = p.text_color;
+    l.style.transform = `rotate(${i*seg + seg/2 - 90}deg)`;
+    disc.appendChild(l);
+  });
+}
+
+async function loadMe() {
+  try {
+    const me = await api("me");
+    points = me.points;
+    prizes = me.prizes;
+    wheelCost = me.cost;
+    buildWheel();
+  } catch (e) {
+    document.getElementById("wheelResult").textContent =
+      "Connexion impossible : " + e.message;
+  }
+}
+
+async function spinWheel() {
+  if (spinning) return;
+  if (points < wheelCost) {
+    alert("Pas assez de points. Commande pour en gagner !");
+    return;
+  }
+  spinning = true;
+  document.getElementById("spinBtn").disabled = true;
+  document.getElementById("wheelResult").textContent = "";
+  try {
+    const res = await api("spin");
+    const idx = prizes.findIndex(p => p.id === res.id);
+    const seg = 360 / prizes.length;
+    rot = Math.ceil(rot / 360) * 360 + 360 * 5 - (idx * seg + seg / 2);
+    document.getElementById("wheelDisc").style.transform = `rotate(${rot}deg)`;
+    setTimeout(async () => {
+      document.getElementById("wheelResult").textContent =
+        res.label === "Perdu" ? "Dommage, retente !" :
+        res.label === "Rejoue" ? "🔁 Rejoue, tes points sont rendus !" :
+        "🎉 Tu as gagné : " + res.label;
+      await loadMe();
+      spinning = false;
+      document.getElementById("spinBtn").disabled = false;
+    }, 4200);
+  } catch (e) {
+    alert(e.message);
+    spinning = false;
+    document.getElementById("spinBtn").disabled = false;
+  }
+}
+
+loadMe();
+    
 
 let cart = [];
 function money(n) {
