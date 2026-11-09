@@ -270,6 +270,8 @@ label { display: block; margin: 12px 0; }
   </section>
 </main>
   <script>
+    window.onerror = (m, s, l) => alert("Erreur JS ligne " + l + " : " + m);
+
 const SELLER_USERNAME = "pschauffer";
 
 const products = {
