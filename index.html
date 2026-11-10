@@ -438,6 +438,8 @@ async function loadMe() {
     points = me.points;
     prizes = me.prizes;
     wheelCost = me.cost;
+    window.myStats = { orders: me.orders || 0, spent: me.spent || 0 };
+
     buildWheel();
   } catch (e) { 
       alert("Erreur : " + e.message + " | initData: " + (tg ? tg.initData.length : "pas de tg"));
