@@ -948,6 +948,22 @@ function closeProfile() {
   setNav("navHome");
 }
 </script>
+<style>
+body{padding-top:44px}
+#ptsBar{position:fixed;top:0;left:0;right:0;z-index:9997;text-align:center;background:#080808f2;border-bottom:2px solid #ffd400;color:#ffd400;font-weight:bold;font-size:14px;padding:10px 8px}
+</style>
+<div id="ptsBar">⭐ Chargement...</div>
+<script>
+setInterval(function () {
+  try {
+    var bar = document.getElementById("ptsBar");
+    var manque = wheelCost - points;
+    bar.textContent = manque <= 0
+      ? "⭐ " + points + " pts · tu peux tourner la roue 🎡"
+      : "⭐ " + points + " pts · encore " + manque + " pour un tour de roue";
+  } catch (e) {}
+}, 1000);
+</script>
 
 </body>
 </html>
