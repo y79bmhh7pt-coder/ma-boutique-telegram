@@ -909,8 +909,14 @@ function goHome() {
 function goCart() {
   closeProfile();
   setNav("navCart");
-  document.getElementById("cartSection").scrollIntoView({ behavior: "smooth" });
+  try {
+    const el = document.getElementById("cartSection");
+    window.scrollTo({ top: el.offsetTop - 10, behavior: "smooth" });
+  } catch (e) {
+    window.scrollTo(0, document.body.scrollHeight);
+  }
 }
+
 
 function levelOf(n) {
   return n >= 30 ? 5 : n >= 15 ? 4 : n >= 8 ? 3 : n >= 3 ? 2 : 1;
