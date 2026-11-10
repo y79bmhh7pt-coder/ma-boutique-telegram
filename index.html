@@ -901,7 +901,13 @@ body{padding-bottom:100px}
     <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
     Profil
   </button>
+  
+  <button id="navAdmin" style="display:none" onclick="location.href='admin.html'">
+    <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+    Admin
+  </button>
 </div>
+
 
 <div id="profileModal" onclick="if(event.target===this)closeProfile()">
   <div id="profileCard">
@@ -921,6 +927,8 @@ body{padding-bottom:100px}
 </div>
 <script>
 window.myStats = { orders: 0, spent: 0 };
+
+document.getElementById("navAdmin").style.display = me.isAdmin ? "flex" : "none";
 
 function setNav(id) {
   ["navHome", "navCart", "navProfile"].forEach(n =>
