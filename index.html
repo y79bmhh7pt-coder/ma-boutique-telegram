@@ -442,6 +442,24 @@ async function loadMe() {
 
   }
 }
+function saveOrder() {
+  try {
+    const mode = document.querySelector('input[name="mode"]:checked');
+    const body = {
+      action: "order",
+      initData: tg ? tg.initData : "",
+      items: cart.map(c => ({ code: c.code, i: c.i })),
+      mode: mode ? mode.value : "",
+      address: document.getElementById("address").value.trim()
+    };
+    fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      keepalive: true
+    }).catch(() => {});
+  } catch (e) {}
+}
 
 async function spinWheel() {
   if (spinning) return;
@@ -582,11 +600,14 @@ video.style.objectFit = "contain";
       add.onclick = () => {
         const option = product.options[Number(select.value)];
         cart.push({
-          id: product.id,
-          name: product.name,
-          q: option.q,
-          price: option.p
-        });
+  id: product.id,
+  code: product.id,
+  i: Number(select.value),
+  name: product.name,
+  q: option.q,
+  price: option.p
+});
+
         renderCart();
         add.textContent = "Ajouté ✓";
         setTimeout(() => {
@@ -678,6 +699,7 @@ function sendOrder() {
     alert("Entre ton adresse de livraison.");
     return;
   }
+  saveOrder();
   let message = "Bonjour, voici ma commande :\n\n";
   cart.forEach(item => {
     message += "- " + item.name +
