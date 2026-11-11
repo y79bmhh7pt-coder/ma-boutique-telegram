@@ -927,8 +927,10 @@ body{padding-bottom:100px}
 </div>
 <script>
 window.myStats = { orders: 0, spent: 0 };
+api("me").then(function (m) {
+  document.getElementById("navAdmin").style.display = m.isAdmin ? "flex" : "none";
+}).catch(function () {});
 
-document.getElementById("navAdmin").style.display = me.isAdmin ? "flex" : "none";
 
 function setNav(id) {
   ["navHome", "navCart", "navProfile"].forEach(n =>
