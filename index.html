@@ -709,7 +709,28 @@ function toggleAddress() {
     "hidden",
     !mode || mode.value !== "Livraison"
   );
+
 }
+    async function loadProducts() {
+  try {
+    const list = await api("products");
+    if (!Array.isArray(list) || !list.length) return;
+    const byCat = { 1: [], 2: [] };
+    list.forEach(p => {
+      (byCat[p.category] = byCat[p.category] || []).push({
+        id: p.code,
+        name: p.name,
+        image: p.image_url,
+        video: p.video_url,
+        options: p.options || [],
+        status: p.status
+      });
+    });
+    Object.keys(byCat).forEach(k => { products[k] = byCat[k]; });
+  } catch (e) {}
+}
+loadProducts();
+
 function sendOrder() {
   if (cart.length === 0) {
     alert("Ton panier est vide.");
