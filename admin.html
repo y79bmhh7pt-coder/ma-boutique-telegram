@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body{margin:0;padding:14px;background:#080808;color:#fff;font-family:Arial,sans-serif}
+h1{color:#ffd400;text-align:center;margin:8px 0}
+.card{background:#171717;border:1px solid #ffd40066;border-radius:14px;padding:12px;margin:12px 0}
+button{padding:12px;border:0;border-radius:10px;font-weight:bold;font-size:15px}
+.ok{background:#ffd400;color:#000}
+.no{background:#333;color:#fff}
+.del{background:#7a1f1f;color:#fff}
+.row{display:flex;gap:8px;margin-top:10px}
+.row button{flex:1}
+.back{background:#ffd400;color:#000}
+.tabs{display:flex;gap:8px;margin:10px 0}
+.tabs button{flex:1;background:#333;color:#fff}
+.tabs button.on{background:#ffd400;color:#000}
+input,select{width:100%;padding:12px;margin:4px 0 10px;border-radius:10px;border:0;font-size:15px;background:#fff;color:#000}
+label{font-size:13px;opacity:.8}
+.small{font-size:13px;opacity:.7}
+#form{display:none}
+#preview{max-width:100%;max-height:160px;border-radius:10px;display:none;margin-bottom:8px}
+</style></head><body>
+<button class="back" onclick="location.href='index.html'">← Retour</button>
+<h1>👑 Admin</h1>
+<div class="tabs">
+  <button id="tabOrders" class="on" onclick="show('orders')">Commandes</button>
+  <button id="tabProducts" onclick="show('products')">Produits</button>
+</div>
+
+<div id="ordersView"><div id="oList">Chargement...</div></div>
+
+<div id="productsView" style="display:none">
+  <button class="ok" style="width:100%" onclick="openForm()">➕ Nouveau produit</button>
+  <div id="form" class="card">
+    <h3 id="formTitle" style="margin-top:0">Produit</h3>
+    <input type="hidden" id="fId"><input type="hidden" id="fCode"><input type="hidden" id="fImg">
+    <label>Nom</label><input id="fName" placeholder="Nom du produit">
+    <label>Catégorie</label>
+    <select id="fCat"><option value="1">Catégorie 1</option><option value="2">Catégorie 2</option></select>
+    <label>Disponibilité</label>
+    <select id="fStatus">
+      <option value="disponible">Disponible</option>
+      <option value="rupture">Rupture</option>
+      <option value="bientot">Bientôt disponible</option>
+    </select>
+    <label>Quantités et prix (quantité=prix, séparés par ;)</label>
+    <input id="fOpts" placeholder="1=10 ; 3=28 ; 5=45">
+    <label>Photo</label>
+    <img id="preview" alt="">
+    <input type="file" id="fFile" accept="image/*" onchange="onFile(event)">
+    <label>Vidéo (nom du fichier, facultatif)</label>
+    <input id="fVideo" placeholder="video1.mp4">
+    <div id="fMsg" class="small"></div>
+    <div class="row">
+      <button class="ok" onclick="saveProduct()">💾 Enregistrer</button>
+      <button class="no" onclick="closeForm()">Annuler</button>
+    </div>
+  </div>
+  <div id="pList">Chargement...</div>
+</div>
+
+<script>
+const API = "https://sdjbcjyrougwgrcgdnkr.supabase.co/functions/v1/api";
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+async function api(action, data = {}) {
+  const r = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, initData: tg ? tg.initData : "", ...data })
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || "Erreur");
+  return j;
+}
+const $ = id => document.getElementById(id);
+
+function show(t) {
+  $("ordersView").style.display = t === "orders" ? "block" : "none";
+  $("productsView").style.display = t === "products" ? "block" : "none";
+  $("tabOrders").className = t === "orders" ? "on" : "";
+  $("tabProducts").className = t === "products" ? "on" : "";
+  if (t === "orders") loadOrders(); else loadProducts();
+}
+
+/* ---------- COMMANDES ---------- */
+async function loadOrders() {
+  const list = $("oList");
+  try {
+    const orders = await api("admin_orders");
+    list.innerHTML = "";
+    if (!orders.length) { list.textContent = "Aucune commande en attente."; return; }
+    orders.forEach(o => {
+      const c = document.createElement("div");
+      c.className = "card";
+      const t = document.createElement("div");
+      t.style.whiteSpace = "pre-line";
+      let txt = "Commande #" + o.id + " · " + Number(o.total).toFixed(2) + " €\n";
+      (o.items || []).forEach(i => { txt += "- " + i.name + " · " + i.q + " g · " + i.price + " €\n"; });
+      txt += "Mode : " + (o.mode || "-");
+      if (o.address) txt += "\nAdresse : " + o.address;
+      if (o.bon) txt += "\n🎡🎁 Gain à offrir : " + o.bon;
+      txt += "\nClient ID : " + o.telegram_id;
+      t.textContent = txt;
+      c.appendChild(t);
+      const r = document.createElement("div");
+      r.className = "row";
+      const v = document.createElement("button");
+      v.className = "ok"; v.textContent = "✅ Valider";
+      v.onclick = () => actOrder("admin_validate", o.id);
+      const n = document.createElement("button");
+      n.className = "no"; n.textContent = "❌ Annuler";
+      n.onclick = () => actOrder("admin_cancel", o.id);
+      r.append(v, n);
+      c.appendChild(r);
+      list.appendChild(c);
+    });
+  } catch (e) { list.textContent = "Erreur : " + e.message; }
+}
+async function actOrder(action, id) {
+  if (!confirm("Confirmer ?")) return;
+  try { await api(action, { order_id: id }); } catch (e) { alert(e.message); }
+  loadOrders();
+}
+
+/* ---------- PRODUITS ---------- */
+let PRODUCTS = [];
+const STATUS = { disponible: "Disponible", rupture: "Rupture", bientot: "Bientôt" };
+
+function optsToText(o) { return (o || []).map(x => x.q + "=" + x.p).join(" ; "); }
+function textToOpts(t) {
+  return t.split(";").map(s => s.trim()).filter(Boolean).map(s => {
+    const [q, p] = s.split("=");
+    return { q: String(q).trim().replace(",", "."), p: Number(String(p).trim().replace(",", ".")) };
+  }).filter(o => o.q && !isNaN(o.p));
+}
+
+async function loadProducts() {
+  const list = $("pList");
+  try {
+    PRODUCTS = await api("products");
+    list.innerHTML = "";
+    if (!PRODUCTS.length) { list.textContent = "Aucun produit."; return; }
+    PRODUCTS.forEach(p => {
+      const c = document.createElement("div");
+      c.className = "card";
+      const t = document.createElement("div");
+      t.style.whiteSpace = "pre-line";
+      t.textContent = p.name + "\nCatégorie " + p.category + " · " + optsToText(p.options);
+      c.appendChild(t);
+      const s = document.createElement("select");
+      Object.keys(STATUS).forEach(k => {
+        const o = document.createElement("option");
+        o.value = k; o.textContent = STATUS[k];
+        if (p.status === k) o.selected = true;
+        s.appendChild(o);
+      });
+      s.onchange = async () => {
+        try { await api("admin_save_product", { product: { ...p, status: s.value } }); }
+        catch (e) { alert(e.message); }
+        loadProducts();
+      };
+      c.appendChild(s);
+      const r = document.createElement("div");
+      r.className = "row";
+      const e = document.createElement("button");
+      e.className = "ok"; e.textContent = "✏️ Modifier";
+      e.onclick = () => openForm(p);
+      const d = document.createElement("button");
+      d.className = "del"; d.textContent = "🗑 Supprimer";
+      d.onclick = async () => {
+        if (!confirm("Supprimer " + p.name + " ?")) return;
+        try { await api("admin_delete_product", { id: p.id }); } catch (er) { alert(er.message); }
+        loadProducts();
+      };
+      r.append(e, d);
+      c.appendChild(r);
+      list.appendChild(c);
+    });
+  } catch (e) { list.textContent = "Erreur : " + e.message; }
+}
+
+function openForm(p) {
+  p = p || {};
+  $("formTitle").textContent = p.id ? "Modifier le produit" : "Nouveau produit";
+  $("fId").value = p.id || "";
+  $("fCode").value = p.code || "";
+  $("fImg").value = p.image_url || "";
+  $("fName").value = p.name || "";
+  $("fCat").value = String(p.category || 1);
+  $("fStatus").value = p.status || "disponible";
+  $("fOpts").value = optsToText(p.options);
+  $("fVideo").value = p.video_url || "";
+  $("fMsg").textContent = "";
+  $("fFile").value = "";
+  const pv = $("preview");
+  if (p.image_url) { pv.src = p.image_url; pv.style.display = "block"; } else { pv.style.display = "none"; }
+  $("form").style.display = "block";
+  $("form").scrollIntoView({ behavior: "smooth" });
+}
+function closeForm() { $("form").style.display = "none"; }
+
+function resizeImage(file, max) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s);
+      c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.85).split(",")[1]);
+    };
+    img.onerror = () => reject(new Error("image illisible"));
+    img.src = url;
+  });
+}
+async function onFile(ev) {
+  const f = ev.target.files[0];
+  if (!f) return;
+  $("fMsg").textContent = "Envoi de l'image...";
+  try {
+    const data = await resizeImage(f, 900);
+    const r = await api("admin_upload_image", { data, ext: "jpg", type: "image/jpeg" });
+    $("fImg").value = r.url;
+    $("preview").src = r.url;
+    $("preview").style.display = "block";
+    $("fMsg").textContent = "Image envoyée ✓";
+  } catch (e) { $("fMsg").textContent = "Erreur image : " + e.message; }
+}
+
+async function saveProduct() {
+  const name = $("fName").value.trim();
+  if (!name) { alert("Entre un nom."); return; }
+  const options = textToOpts($("fOpts").value);
+  if (!options.length) { alert("Entre au moins une quantité, par exemple 1=10"); return; }
+  const product = {
+    id: $("fId").value || null,
+    code: $("fCode").value || null,
+    name,
+    category: Number($("fCat").value),
+    status: $("fStatus").value,
+    options,
+    image_url: $("fImg").value || null,
+    video_url: $("fVideo").value.trim() || null
+  };
+  try {
+    await api("admin_save_product", { product });
+    closeForm();
+    loadProducts();
+  } catch (e) { alert(e.message); }
+}
+
+loadOrders();
+</script>
+</body></html>
