@@ -267,6 +267,10 @@ label { display: block; margin: 12px 0; }
       <label for="details">Précisions (facultatif)</label>
       <input id="details" placeholder="Bâtiment, étage...">
     </div>
+    <div id="bonBox" class="hidden">
+  <label for="bonSelect">🎁 Utiliser un gain de la roue</label>
+  <select id="bonSelect"></select>
+</div>
     <button onclick="sendOrder()">Préparer la commande dans Telegram</button>
     <p class="small">
       Vérifie ta commande avant de l'envoyer dans Telegram.
@@ -439,6 +443,9 @@ async function loadMe() {
     prizes = me.prizes;
     wheelCost = me.cost;
     window.myStats = { orders: me.orders || 0, spent: me.spent || 0 };
+    window.myBons = me.bons || [];
+fillBons();
+
 
     buildWheel();
   } catch (e) { 
@@ -448,10 +455,25 @@ async function loadMe() {
   }
 }
 function saveOrder() {
+  function fillBons() {
+  const sel = document.getElementById("bonSelect");
+  if (!sel) return;
+  const bons = window.myBons || [];
+  sel.innerHTML = '<option value="">Aucun</option>';
+  bons.forEach(b => {
+    const o = document.createElement("option");
+    o.value = b.id;
+    o.textContent = b.prize_label;
+    sel.appendChild(o);
+  });
+  document.getElementById("bonBox").classList.toggle("hidden", !bons.length);
+}
+
   try {
     const mode = document.querySelector('input[name="mode"]:checked');
     const body = {
       action: "order",
+      bon_id: (document.getElementById("bonSelect") || {}).value || null,
       initData: tg ? tg.initData : "",
       items: cart.map(c => ({ code: c.code, i: c.i })),
       mode: mode ? mode.value : "",
@@ -724,6 +746,11 @@ function sendOrder() {
       message += "\nPrécisions : " + details;
     }
   }
+  const bonSel = document.getElementById("bonSelect");
+if (bonSel && bonSel.value) {
+  message += "\n\n🎡🎁 Gain roue : " + bonSel.options[bonSel.selectedIndex].text;
+}
+
   const username = SELLER_USERNAME.replace(/^@/, "").trim();
   if (!username || username === "TON_PSEUDO_TELEGRAM") {
     alert("Ajoute le pseudo Telegram du vendeur dans le code.");
