@@ -454,7 +454,6 @@ fillBons();
 
   }
 }
-function saveOrder() {
   function fillBons() {
   const sel = document.getElementById("bonSelect");
   if (!sel) return;
@@ -468,6 +467,9 @@ function saveOrder() {
   });
   document.getElementById("bonBox").classList.toggle("hidden", !bons.length);
 }
+
+    function saveOrder() {
+
 
   try {
     const mode = document.querySelector('input[name="mode"]:checked');
