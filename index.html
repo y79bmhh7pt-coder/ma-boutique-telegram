@@ -831,7 +831,11 @@ function toggleAddress() {
         image: p.image_url,
         video: p.video_url,
         options: p.options || [],
-        status: p.status
+        status: p.status,
+        description: p.description,
+        image_url: p.image_url,
+        video_url: p.video_url
+
       });
     });
     Object.keys(byCat).forEach(k => { products[k] = byCat[k]; });
