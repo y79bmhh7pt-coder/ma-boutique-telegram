@@ -384,7 +384,20 @@ function closeProduct() {
 }
 
 function confirmAdd() {
-  alert("Étape suivante : brancher le panier");
+    const p = currentProduct;
+  if (!p) return;
+  const option = p.options[currentOpt];
+  cart.push({
+    id: p.id,
+    code: p.id,
+    i: currentOpt,
+    name: p.name,
+    q: option.q,
+    price: option.p
+  });
+  renderCart();
+  closeProduct();
+
 }
 
 
