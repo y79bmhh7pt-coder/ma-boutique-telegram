@@ -568,6 +568,11 @@ fillBons();
 
     buildWheel();
   } catch (e) { 
+        if (String(e.message).includes("bloqué")) {
+      document.body.innerHTML = '<div style="padding:60px 20px;text-align:center;color:#fff;font-family:Arial"><h1 style="color:#ffd400">🚫 Accès refusé</h1><p>Ton compte a été bloqué.</p></div>';
+      return;
+    }
+
       alert("Erreur : " + e.message + " | initData: " + (tg ? tg.initData.length : "pas de tg"));
 
 
