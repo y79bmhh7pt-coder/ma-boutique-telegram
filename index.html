@@ -655,6 +655,10 @@ function openCategory(number) {
   document.getElementById("products").classList.remove("hidden");
   document.getElementById("categoryTitle").textContent =
     number === 1 ? "Catégorie 1" : "Catégorie 2";
+    renderProducts(products[number]);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  return;
+
   const list = document.getElementById("productList");
   
 list.innerHTML = "";
