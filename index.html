@@ -246,6 +246,19 @@ label { display: block; margin: 12px 0; }
     <p class="total">Total : <span id="total">0,00</span> €</p>
     <button onclick="checkout()">Commander</button>
   </section>
+  <div id="pModal">
+  <button id="pClose" onclick="closeProduct()">✕</button>
+  <div id="pSheet">
+    <div id="pMedia"></div>
+    <div id="pBody">
+      <h2 id="pTitle"></h2>
+      <div id="pDesc"></div>
+      <div id="pOpts"></div>
+      <button id="pAdd" style="width:100%;margin-top:8px" onclick="confirmAdd()">🛒 Ajouter au panier</button>
+    </div>
+  </div>
+</div>
+  
   <section id="checkoutSection" class="cart hidden">
     <button class="back" onclick="showCart()">← Retour au panier</button>
     <h2>📦 Mode de commande</h2>
