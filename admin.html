@@ -348,6 +348,7 @@ function renderClients() {
     const t = document.createElement("div");
     t.style.whiteSpace = "pre-line";
     t.textContent =
+      (c.blocked ? "🚫 BLOQUÉ\n" : "") +
       (c.username ? "@" + c.username : "(sans pseudo)") + "\n" +
       "ID : " + c.telegram_id + "\n" +
       "⭐ " + c.points + " points\n" +
@@ -372,6 +373,20 @@ function renderClients() {
     };
     r.append(plus, minus, other);
     card.appendChild(r);
+    const r2 = document.createElement("div");
+    r2.className = "row";
+    const blk = document.createElement("button");
+    blk.className = c.blocked ? "ok" : "del";
+    blk.textContent = c.blocked ? "✅ Débloquer" : "🚫 Bloquer";
+    blk.onclick = async () => {
+      const who = c.username ? "@" + c.username : c.telegram_id;
+      if (!confirm((c.blocked ? "Débloquer " : "Bloquer ") + who + " ?")) return;
+      try { await api("admin_block", { telegram_id: c.telegram_id, blocked: !c.blocked }); }
+      catch (e) { alert(e.message); }
+      loadClients();
+    };
+    r2.appendChild(blk);
+    card.appendChild(r2);
     list.appendChild(card);
   });
 }
