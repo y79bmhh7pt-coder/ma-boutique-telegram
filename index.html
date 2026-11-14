@@ -292,6 +292,101 @@ label { display: block; margin: 12px 0; }
     window.onerror = (m, s, l) => alert("Erreur JS ligne " + l + " : " + m);
 
 const SELLER_USERNAME = "pschauffer";
+    let currentProduct = null, currentOpt = 0;
+
+function renderProducts(list) {
+  const box = document.getElementById("productList");
+  box.innerHTML = "";
+  list.forEach(p => {
+    const opts = p.options || [];
+    const min = opts.length ? Math.min(...opts.map(o => Number(o.p))) : 0;
+    const c = document.createElement("div");
+    c.className = "pcard";
+    const img = document.createElement("img");
+    img.src = p.image_url || "";
+    img.alt = p.name;
+    img.loading = "lazy";
+    const info = document.createElement("div");
+    info.className = "info";
+    const n = document.createElement("div");
+    n.className = "pname";
+    n.textContent = p.name;
+    const pr = document.createElement("div");
+    pr.className = "pprice";
+    pr.textContent = "Dès " + min + " €";
+    info.append(n, pr);
+    if (p.status === "rupture" || p.status === "bientot") {
+      const t = document.createElement("div");
+      t.className = "tag";
+      t.textContent = p.status === "rupture" ? "Rupture de stock" : "Bientôt disponible";
+      info.appendChild(t);
+    }
+    c.append(img, info);
+    c.onclick = () => openProduct(p);
+    box.appendChild(c);
+  });
+}
+
+function openProduct(p) {
+  currentProduct = p;
+  currentOpt = 0;
+  const media = document.getElementById("pMedia");
+  media.innerHTML = "";
+  if (p.video_url) {
+    const v = document.createElement("video");
+    v.src = p.video_url;
+    v.poster = p.image_url || "";
+    v.muted = true;
+    v.loop = true;
+    v.autoplay = true;
+    v.controls = true;
+    v.setAttribute("playsinline", "");
+    media.appendChild(v);
+    v.play().catch(() => {});
+  } else if (p.image_url) {
+    const i = document.createElement("img");
+    i.className = "pimg";
+    i.src = p.image_url;
+    media.appendChild(i);
+  }
+  document.getElementById("pTitle").textContent = p.name;
+  document.getElementById("pDesc").textContent = p.description || "";
+  const box = document.getElementById("pOpts");
+  box.innerHTML = "";
+  (p.options || []).forEach((o, idx) => {
+    const d = document.createElement("div");
+    d.className = "popt" + (idx === 0 ? " on" : "");
+    const l = document.createElement("span");
+    l.textContent = o.q + " g";
+    const b = document.createElement("b");
+    b.textContent = Number(o.p).toFixed(2) + " €";
+    d.append(l, b);
+    d.onclick = () => {
+      currentOpt = idx;
+      [...box.children].forEach((x, k) => x.classList.toggle("on", k === idx));
+    };
+    box.appendChild(d);
+  });
+  const add = document.getElementById("pAdd");
+  const dispo = !p.status || p.status === "disponible";
+  add.disabled = !dispo;
+  add.style.opacity = dispo ? 1 : .5;
+  add.textContent = dispo ? "🛒 Ajouter au panier" : "Indisponible";
+  document.getElementById("pModal").style.display = "block";
+  document.getElementById("pModal").scrollTop = 0;
+}
+
+function closeProduct() {
+  const m = document.getElementById("pModal");
+  const v = m.querySelector("video");
+  if (v) { v.pause(); v.removeAttribute("src"); v.load(); }
+  m.style.display = "none";
+}
+
+function confirmAdd() {
+  alert("Étape suivante : brancher le panier");
+}
+
 
 const products = {
   1: [
