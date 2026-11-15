@@ -1592,6 +1592,106 @@ setInterval(function () {
 #pName{width:21.35% !important}
 #pUser{width:14.58% !important}
 </style>
+<style>
+#pQty{display:flex;align-items:center;justify-content:center;gap:18px;margin:14px 0 4px}
+#pQty button{width:46px;height:46px;border-radius:50%;font-size:26px;line-height:1;padding:0;background:#333;color:#fff}
+#pQty span{min-width:40px;text-align:center;font-size:24px;font-weight:900;color:#ffd400}
+.cart-line .qbtns{display:flex;gap:6px;flex-shrink:0}
+.cart-line .qbtns button{width:36px;height:36px;padding:0;font-size:20px}
+</style>
+<script>
+(function () {
+  let qty = 1;
+  const MAX = 20;
+
+  function unitPrice() {
+    const p = currentProduct;
+    const o = p && p.options ? p.options[currentOpt] : null;
+    return o ? Number(o.p) : 0;
+  }
+  function refresh() {
+    const n = document.getElementById("pQtyN");
+    if (n) n.textContent = qty;
+    const add = document.getElementById("pAdd");
+    if (add && !add.disabled) {
+      add.textContent = "🛒 Ajouter au panier · " + money(unitPrice() * qty) + " €";
+    }
+  }
+
+  /* Sélecteur − 1 + dans la fiche produit */
+  const baseOpen = openProduct;
+  openProduct = function (p) {
+    baseOpen(p);
+    qty = 1;
+    let q = document.getElementById("pQty");
+    if (q) q.remove();
+    q = document.createElement("div");
+    q.id = "pQty";
+    const minus = document.createElement("button");
+    minus.textContent = "−";
+    minus.onclick = () => { if (qty > 1) { qty--; refresh(); } };
+    const n = document.createElement("span");
+    n.id = "pQtyN";
+    const plus = document.createElement("button");
+    plus.textContent = "+";
+    plus.onclick = () => { if (qty < MAX) { qty++; refresh(); } };
+    q.append(minus, n, plus);
+    document.getElementById("pAdd").before(q);
+    refresh();
+  };
+  document.getElementById("pOpts").addEventListener("click", () => setTimeout(refresh, 0));
+
+  /* Ajouter au panier : plusieurs fois la même ligne */
+  confirmAdd = function () {
+    const p = currentProduct;
+    if (!p || currentOpt < 0) return;
+    const o = p.options[currentOpt];
+    if (!o || o.out) return;
+    for (let k = 0; k < qty; k++) {
+      cart.push({ id: p.id, code: p.id, i: currentOpt, name: p.name, q: o.q, price: o.p });
+    }
+    renderCart();
+    closeProduct();
+  };
+
+  /* Panier : lignes identiques regroupées avec − et + */
+  renderCart = function () {
+    const box = document.getElementById("cartItems");
+    box.innerHTML = "";
+    if (cart.length === 0) {
+      box.textContent = "Ton panier est vide.";
+    } else {
+      const groups = [];
+      cart.forEach((item, index) => {
+        const g = groups.find(x => x.item.code === item.code && x.item.i === item.i);
+        if (g) { g.n++; g.last = index; }
+        else groups.push({ item, n: 1, last: index });
+      });
+      groups.forEach(g => {
+        const line = document.createElement("div");
+        line.className = "cart-line";
+        const text = document.createElement("span");
+        text.textContent = g.n + " × " + g.item.name + " — " + g.item.q +
+          " gramme(s) — " + money(g.item.price * g.n) + " €";
+        const btns = document.createElement("div");
+        btns.className = "qbtns";
+        const minus = document.createElement("button");
+        minus.textContent = "−";
+        minus.onclick = () => { cart.splice(g.last, 1); renderCart(); };
+        const plus = document.createElement("button");
+        plus.textContent = "+";
+        plus.onclick = () => { if (g.n < MAX) { cart.push({ ...g.item }); renderCart(); } };
+        btns.append(minus, plus);
+        line.append(text, btns);
+        box.appendChild(line);
+      });
+    }
+    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    document.getElementById("total").textContent = money(total);
+  };
+  renderCart();
+})();
+</script>
 
 
 </body>
