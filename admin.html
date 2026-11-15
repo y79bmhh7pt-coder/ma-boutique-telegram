@@ -194,10 +194,14 @@ let PRODUCTS = [];
 const STATUS = { disponible: "Disponible", rupture: "Rupture", bientot: "Bientôt" };
 
 function optsToText(o) { return (o || []).map(x => x.q + "=" + x.p).join(" ; "); }
+let editingOpts = [];
 function textToOpts(t) {
   return t.split(";").map(s => s.trim()).filter(Boolean).map(s => {
     const [q, p] = s.split("=");
-    return { q: String(q).trim().replace(",", "."), p: Number(String(p).trim().replace(",", ".")) };
+    const o = { q: String(q).trim().replace(",", "."), p: Number(String(p).trim().replace(",", ".")) };
+    const old = editingOpts.find(x => String(x.q) === o.q);
+    if (old && old.out) o.out = true;
+    return o;
   }).filter(o => o.q && !isNaN(o.p));
 }
 
@@ -227,6 +231,27 @@ async function loadProducts() {
         loadProducts();
       };
       c.appendChild(s);
+      const lab = document.createElement("div");
+      lab.className = "small";
+      lab.textContent = "Touche une quantité pour la mettre en stock ✅ ou en rupture ❌ :";
+      c.appendChild(lab);
+      const ob = document.createElement("div");
+      ob.className = "row";
+      ob.style.flexWrap = "wrap";
+      (p.options || []).forEach((o, idx) => {
+        const b = document.createElement("button");
+        b.className = o.out ? "no" : "ok";
+        b.style.flex = "1 1 30%";
+        b.textContent = o.q + " g " + (o.out ? "❌" : "✅");
+        b.onclick = async () => {
+          const options = (p.options || []).map((x, k) => k === idx ? { ...x, out: !x.out } : x);
+          try { await api("admin_save_product", { product: { ...p, options } }); }
+          catch (er) { alert(er.message); }
+          loadProducts();
+        };
+        ob.appendChild(b);
+      });
+      c.appendChild(ob);
       const r = document.createElement("div");
       r.className = "row";
       const e = document.createElement("button");
@@ -248,6 +273,7 @@ async function loadProducts() {
 
 function openForm(p) {
   p = p || {};
+  editingOpts = p.options || [];
   $("formTitle").textContent = p.id ? "Modifier le produit" : "Nouveau produit";
   $("fId").value = p.id || "";
   $("fCode").value = p.code || "";
