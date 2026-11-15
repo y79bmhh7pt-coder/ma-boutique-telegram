@@ -1486,7 +1486,52 @@ setInterval(function () {
   loadReviews();
 })();
 </script>
-  
+  <style>
+#profileCard{max-width:380px;padding:18px 16px;border:2px solid #ffd400;border-radius:22px;
+  background:linear-gradient(#000b,#000d),url('profil-fond.jpg') center/cover,#111;
+  box-shadow:0 0 26px #ffd400aa,inset 0 0 30px #ffd40022}
+#pCrown{font-size:36px;line-height:1;margin-bottom:-12px;position:relative;z-index:2;filter:drop-shadow(0 0 8px #ffd400)}
+#pAvatar,#pAvatarFb{width:120px;height:120px;border-radius:50%;border:4px solid #ffd400;box-shadow:0 0 18px #ffd400,inset 0 0 10px #000;object-fit:cover;background:#000}
+#pAvatarFb{display:none;align-items:center;justify-content:center;font-size:52px;margin:0 auto}
+#pName{display:block;width:fit-content;max-width:100%;margin:14px auto 8px !important;padding:8px 18px;border:2px solid #ffd400;border-radius:14px;background:#000c;font-size:18px;box-shadow:0 0 10px #ffd40066}
+#pUser{display:block;width:fit-content;max-width:100%;margin:0 auto 6px;padding:7px 18px;border:2px solid #ffd400;border-radius:14px;background:#000c;font-size:16px;font-weight:bold;opacity:1 !important}
+#pUser:empty{display:none}
+#profileCard .pStats{grid-template-columns:repeat(3,1fr);gap:8px}
+#profileCard .pStats div{background:#000c;border:2px solid #ffd400;border-radius:14px;padding:10px 4px;font-size:12px;font-weight:bold;box-shadow:0 0 10px #ffd40055;text-transform:uppercase}
+#profileCard .pStats b{font-size:22px;color:#fff}
+</style>
+<script>
+(function () {
+  const card = document.getElementById("profileCard");
+  const av = document.getElementById("pAvatar");
+  if (!card || !av) return;
+
+  /* Couronne + rond de secours si le client n'a pas de photo */
+  const crown = document.createElement("div");
+  crown.id = "pCrown";
+  crown.textContent = "👑";
+  const fb = document.createElement("div");
+  fb.id = "pAvatarFb";
+  fb.textContent = "👤";
+  card.insertBefore(fb, card.firstChild);
+  card.insertBefore(crown, fb);
+
+  /* 3 stats : Commandes, Points de la roue, Panier moyen (plus de « Dépensé ») */
+  const box = id => document.getElementById(id).parentElement;
+  box("pSpent").style.display = "none";
+  box("pOrders").style.order = "1";
+  box("pPoints").style.order = "2";
+  box("pAvg").style.order = "3";
+  box("pPoints").lastChild.textContent = "Points 🎡";
+
+  const baseProfile = openProfile;
+  openProfile = function () {
+    baseProfile();
+    fb.style.display = av.style.display === "none" ? "flex" : "none";
+  };
+})();
+</script>
+
 
 </body>
 </html>
