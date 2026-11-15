@@ -1531,6 +1531,61 @@ setInterval(function () {
   };
 })();
 </script>
+<style>
+#profileModal{overflow-y:auto}
+#profileCard{max-width:560px;padding:0;background:none;border:0;box-shadow:none;text-align:center}
+#pBanner{position:relative;width:100%;aspect-ratio:1536/865;border-radius:16px;overflow:hidden;
+  background:url('profil-fond.jpg') center/100% 100% no-repeat,#111;
+  box-shadow:0 0 0 2px #ffd400,0 0 24px #ffd400aa}
+#pBanner>*{position:absolute;margin:0}
+#pAvatar,#pAvFb{left:7.42%;top:9.94%;width:15.23%;aspect-ratio:1;border-radius:50%;object-fit:cover}
+#pAvFb{display:flex;align-items:center;justify-content:center;background:#0a0a0a;font-size:calc(var(--u,.25px)*110)}
+#pName,#pUser,.pNum{display:block;color:#fff;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;text-shadow:0 1px 3px #000}
+#pName{left:41.41%;top:34.45%;width:21.35%;height:calc(var(--u,.25px)*40);line-height:calc(var(--u,.25px)*40);font-size:calc(var(--u,.25px)*27)}
+#pUser{left:45.57%;top:41.62%;width:14.58%;height:calc(var(--u,.25px)*32);line-height:calc(var(--u,.25px)*32);font-size:calc(var(--u,.25px)*25);opacity:1 !important}
+.pNum{top:87.05%;height:calc(var(--u,.25px)*36);line-height:calc(var(--u,.25px)*36);font-size:calc(var(--u,.25px)*34);font-style:italic}
+#pOrders{left:19.14%;width:14.26%}
+#pPoints{left:47.98%;width:11.39%}
+#pAvg{left:75.13%;width:13.87%}
+#pLevel{margin-top:10px;font-size:20px;color:#ffd400;letter-spacing:2px}
+</style>
+<script>
+(function () {
+  const card = document.getElementById("profileCard");
+  if (!card) return;
+
+  card.innerHTML =
+    '<div id="pBanner">' +
+      '<div id="pAvFb">👤</div>' +
+      '<img id="pAvatar" alt="">' +
+      '<div id="pName"></div>' +
+      '<div id="pUser"></div>' +
+      '<div class="pNum" id="pOrders">0</div>' +
+      '<div class="pNum" id="pPoints">0</div>' +
+      '<div class="pNum" id="pAvg">-</div>' +
+    '</div>' +
+    '<div id="pLevel"></div>' +
+    '<div style="font-size:12px;opacity:.7">Niveau de fidélité</div>' +
+    '<span id="pSpent" style="display:none"></span>' +
+    '<button onclick="closeProfile()" style="width:100%;margin-top:12px">Fermer</button>';
+
+  function scale() {
+    const b = document.getElementById("pBanner");
+    if (b && b.clientWidth) card.style.setProperty("--u", (b.clientWidth / 1536) + "px");
+  }
+  window.addEventListener("resize", scale);
+
+  const baseProfile = openProfile;
+  openProfile = function () {
+    baseProfile();
+    const n = document.getElementById("pName");
+    n.textContent = "👑 " + n.textContent;
+    const u = document.getElementById("pUser");
+    u.textContent = u.textContent.replace(/^@/, "");
+    scale();
+  };
+})();
+</script>
 
 
 </body>
