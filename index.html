@@ -1290,6 +1290,203 @@ setInterval(function () {
   } catch (e) {}
 }, 1000);
 </script>
+<style>
+.pcard .rate{font-size:12px;color:var(--yellow);margin-top:3px}
+#pReviews{margin-top:22px;border-top:1px solid #ffffff30;padding-top:14px}
+#pReviews h3{margin:0 0 8px;color:#ffd400}
+.rv{background:#171717;border:1px solid #ffffff20;border-radius:12px;padding:10px;margin:8px 0;font-size:14px}
+.rv .stars{color:#ffd400}
+.rv .txt{white-space:pre-line;margin-top:4px;overflow-wrap:anywhere}
+.rv .who{font-size:12px;opacity:.7;margin-top:4px}
+.rv .reply{margin-top:6px;padding:8px;border-left:3px solid #ffd400;background:#2a2400;border-radius:6px;font-size:13px;white-space:pre-line}
+#rvForm{background:#171717;border:1px solid #ffd40066;border-radius:12px;padding:12px;margin:12px 0}
+#rvStars span{font-size:34px;cursor:pointer;color:#555;padding:0 3px}
+#rvStars span.on{color:#ffd400}
+#rvForm textarea{width:100%;min-height:80px;padding:10px;border-radius:9px;border:1px solid #555;background:#101010;color:#fff;font-family:inherit;font-size:15px}
+</style>
+<script>
+(function () {
+  const REV = { published: [], mine: [], bought: [] };
+
+  async function loadReviews() {
+    try {
+      const r = await api("reviews");
+      REV.published = r.published || [];
+      REV.mine = r.mine || [];
+      REV.bought = r.bought || [];
+    } catch (e) {}
+  }
+
+  function stats(code) {
+    const l = REV.published.filter(r => r.product_code === code);
+    if (!l.length) return { count: 0, avg: "0" };
+    const avg = l.reduce((s, r) => s + r.rating, 0) / l.length;
+    return { count: l.length, avg: avg.toFixed(1).replace(".", ",") };
+  }
+
+  /* Note moyenne sur les cartes de la grille */
+  const baseRender = renderProducts;
+  renderProducts = function (list) {
+    baseRender(list);
+    const cards = document.getElementById("productList").children;
+    list.forEach((p, i) => {
+      const s = stats(p.id);
+      if (!s.count || !cards[i]) return;
+      const d = document.createElement("div");
+      d.className = "rate";
+      d.textContent = "⭐ " + s.avg + " (" + s.count + ")";
+      const info = cards[i].querySelector(".info");
+      if (info) info.appendChild(d);
+    });
+  };
+
+  /* Avis dans la fiche produit */
+  const baseOpen = openProduct;
+  openProduct = function (p) {
+    baseOpen(p);
+    showReviews(p);
+  };
+
+  function showReviews(p) {
+    const body = document.getElementById("pBody");
+    const old = document.getElementById("pReviews");
+    if (old) old.remove();
+    const box = document.createElement("div");
+    box.id = "pReviews";
+    const s = stats(p.id);
+    const h = document.createElement("h3");
+    h.textContent = s.count ? "⭐ " + s.avg + " · " + s.count + " avis" : "Avis clients";
+    box.appendChild(h);
+
+    if (REV.bought.includes(p.id)) {
+      const mine = REV.mine.find(m => m.product_code === p.id);
+      box.appendChild(reviewForm(p, mine));
+    }
+
+    const list = REV.published.filter(r => r.product_code === p.id);
+    if (!list.length) {
+      const e = document.createElement("div");
+      e.className = "small";
+      e.textContent = "Pas encore d'avis.";
+      box.appendChild(e);
+    }
+    list.slice(0, 20).forEach(r => {
+      const d = document.createElement("div");
+      d.className = "rv";
+      const st = document.createElement("div");
+      st.className = "stars";
+      st.textContent = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+      const badge = document.createElement("span");
+      badge.style.cssText = "font-size:11px;color:#9f9;margin-left:8px";
+      badge.textContent = "✔ Achat vérifié";
+      st.appendChild(badge);
+      d.appendChild(st);
+      if (r.comment) {
+        const t = document.createElement("div");
+        t.className = "txt";
+        t.textContent = r.comment;
+        d.appendChild(t);
+      }
+      const w = document.createElement("div");
+      w.className = "who";
+      w.textContent = "Client anonyme · " + new Date(r.created_at).toLocaleDateString("fr-FR");
+      d.appendChild(w);
+      if (r.admin_reply) {
+        const rp = document.createElement("div");
+        rp.className = "reply";
+        rp.textContent = "💬 LABO EXPRESS 57 : " + r.admin_reply;
+        d.appendChild(rp);
+      }
+      box.appendChild(d);
+    });
+    body.appendChild(box);
+  }
+
+  function reviewForm(p, mine) {
+    const f = document.createElement("div");
+    f.id = "rvForm";
+    const title = document.createElement("div");
+    title.style.fontWeight = "bold";
+    title.textContent = mine
+      ? "Ton avis" + (mine.status === "pending" ? " (en attente de validation)"
+        : mine.status === "rejected" ? " (refusé)" : " (publié)")
+      : "Donne ton avis";
+    const stars = document.createElement("div");
+    stars.id = "rvStars";
+    let rating = mine ? mine.rating : 0;
+    const spans = [];
+    const paint = () => spans.forEach((s, i) => s.classList.toggle("on", i < rating));
+    for (let i = 1; i <= 5; i++) {
+      const s = document.createElement("span");
+      s.textContent = "★";
+      s.onclick = () => { rating = i; paint(); };
+      spans.push(s);
+      stars.appendChild(s);
+    }
+    paint();
+    const ta = document.createElement("textarea");
+    ta.maxLength = 500;
+    ta.placeholder = "Ton commentaire (facultatif)";
+    ta.value = mine ? (mine.comment || "") : "";
+    const note = document.createElement("div");
+    note.className = "small";
+    note.textContent = "Ton avis est anonyme. Évite les promesses médicales. +10 points quand il est publié.";
+    const btn = document.createElement("button");
+    btn.style.cssText = "width:100%;margin-top:8px";
+    btn.textContent = mine ? "Modifier mon avis" : "Envoyer mon avis";
+    btn.onclick = async () => {
+      if (!rating) { alert("Choisis une note de 1 à 5 étoiles."); return; }
+      btn.disabled = true;
+      try {
+        await api("submit_review", { code: p.id, rating, comment: ta.value.trim() });
+        await loadReviews();
+        alert("Merci ! Ton avis sera visible après validation.");
+        showReviews(p);
+      } catch (e) {
+        alert(e.message);
+        btn.disabled = false;
+      }
+    };
+    f.append(title, stars, ta, note, btn);
+    return f;
+  }
+
+  /* Profil : produits à noter */
+  const baseProfile = openProfile;
+  openProfile = function () {
+    baseProfile();
+    const card = document.getElementById("profileCard");
+    const old = document.getElementById("pToRate");
+    if (old) old.remove();
+    const todo = REV.bought.filter(code => !REV.mine.some(m => m.product_code === code));
+    if (!todo.length) return;
+    const all = [].concat(products[1] || [], products[2] || []);
+    const box = document.createElement("div");
+    box.id = "pToRate";
+    box.style.cssText = "margin:12px 0;text-align:left";
+    const t = document.createElement("div");
+    t.style.cssText = "font-weight:bold;color:#ffd400;margin-bottom:6px";
+    t.textContent = "✍️ Tes produits à noter (+10 points)";
+    box.appendChild(t);
+    let n = 0;
+    todo.forEach(code => {
+      const prod = all.find(x => x.id === code);
+      if (!prod) return;
+      n++;
+      const b = document.createElement("button");
+      b.style.cssText = "width:100%;margin:4px 0;background:#333;color:#fff";
+      b.textContent = "⭐ " + prod.name;
+      b.onclick = () => { closeProfile(); openProduct(prod); };
+      box.appendChild(b);
+    });
+    if (!n) return;
+    card.insertBefore(box, card.lastElementChild);
+  };
+
+  loadReviews();
+})();
+</script>
+  
 
 </body>
 </html>
