@@ -36,6 +36,7 @@ label{font-size:13px;opacity:.8}
   <button id="tabWheel" onclick="show('wheel')">Roue</button>
   <button id="tabHistory" onclick="show('history')">Historique</button>
   <button id="tabReviews" onclick="show('reviews')">Avis</button>
+  <button id="tabBot" onclick="show('bot')">Bot</button>
 </div>
 
 <div id="ordersView"><div id="oList">Chargement...</div></div>
@@ -120,6 +121,20 @@ label{font-size:13px;opacity:.8}
   <div id="rList">Chargement...</div>
 </div>
 
+<div id="botView" style="display:none">
+  <div class="card">
+    <h3 style="margin-top:0">🤖 Mon bot Telegram</h3>
+    <div id="bStatus" class="small">Chargement...</div>
+    <label style="margin-top:12px">Lien de ta boutique (https://...)</label>
+    <input id="bShop" placeholder="https://ton-pseudo.github.io/ton-projet/">
+    <label>Message de bienvenue (quand on lance le bot)</label>
+    <textarea id="bWelcome" rows="5" placeholder="Bienvenue chez LABO EXPRESS 57 !"></textarea>
+    <button class="ok" style="width:100%" onclick="saveBot()">✅ Activer / mettre à jour le bot</button>
+    <div id="bMsg" class="small" style="margin-top:8px"></div>
+    <p class="small">À refaire après chaque changement de bot : mets d'abord le nouveau token dans Supabase (BOT_TOKEN), puis appuie sur ce bouton.</p>
+  </div>
+</div>
+
 <div id="historyView" style="display:none">
   <select id="hFilter" onchange="loadHistory()">
     <option value="">Toutes (validées et annulées)</option>
@@ -148,7 +163,7 @@ async function api(action, data = {}) {
 const $ = id => document.getElementById(id);
 
 function show(t) {
-  ["orders", "products", "clients", "wheel", "history", "reviews"].forEach(n => {
+  ["orders", "products", "clients", "wheel", "history", "reviews", "bot"].forEach(n => {
     $(n + "View").style.display = n === t ? "block" : "none";
     $("tab" + n.charAt(0).toUpperCase() + n.slice(1)).className = n === t ? "on" : "";
   });
@@ -157,6 +172,7 @@ function show(t) {
   else if (t === "clients") loadClients();
   else if (t === "wheel") loadWheel();
   else if (t === "reviews") loadReviews();
+  else if (t === "bot") loadBot();
   else loadHistory();
 }
 
@@ -177,7 +193,13 @@ async function loadOrders() {
       txt += "Mode : " + (o.mode || "-");
       if (o.address) txt += "\nAdresse : " + o.address;
       if (o.bon) txt += "\n🎡🎁 Gain à offrir : " + o.bon;
-      txt += "\nClient ID : " + o.telegram_id;
+      txt += "\nClient : " + (o.username ? "@" + o.username + " · " : "") + "ID " + o.telegram_id;
+      if (o.first_order) {
+        txt = (o.video_received
+          ? "🎥 1ÈRE COMMANDE · VIDÉO REÇUE ✅\nRegarde-la dans ta discussion avec le bot, puis valide ici ou avec les boutons du bot.\n\n"
+          : "🎥 1ÈRE COMMANDE · ⏳ vidéo pas encore reçue (« LABO EXPRESS 57 OFFICIEL », montant en main)\n\n") + txt;
+        c.style.borderColor = "#ff4d4d";
+      }
       t.textContent = txt;
       c.appendChild(t);
       const r = document.createElement("div");
@@ -391,7 +413,8 @@ function renderClients() {
       "⭐ " + c.points + " points\n" +
       "🛒 " + c.orders + " commande(s) · " + fmtEuro(c.spent) + "\n" +
       "Dernière commande : " + fmtDate(c.last) + "\n" +
-      "Inscrit le : " + fmtDate(c.created_at);
+      "Inscrit le : " + fmtDate(c.created_at) + "\n" +
+      (c.verified || c.orders > 0 ? "✔ Vérifié" : "⚠️ Non vérifié");
     card.appendChild(t);
     const r = document.createElement("div");
     r.className = "row";
@@ -422,7 +445,15 @@ function renderClients() {
       catch (e) { alert(e.message); }
       loadClients();
     };
-    r2.appendChild(blk);
+    const ver = document.createElement("button");
+    ver.className = "no";
+    ver.textContent = c.verified ? "Retirer ✔" : "✅ Marquer vérifié";
+    ver.onclick = async () => {
+      try { await api("admin_verify", { telegram_id: c.telegram_id, verified: !c.verified }); }
+      catch (e) { alert(e.message); }
+      loadClients();
+    };
+    r2.append(blk, ver);
     card.appendChild(r2);
     list.appendChild(card);
   });
@@ -643,8 +674,31 @@ async function loadReviews() {
   } catch (e) { list.textContent = "Erreur : " + e.message; }
 }
 
+/* ---------- BOT ---------- */
+async function loadBot() {
+  try {
+    const b = await api("admin_bot_get");
+    $("bShop").value = b.shop_url || "";
+    $("bWelcome").value = b.welcome_text || "";
+    let st = b.webhook
+      ? "✅ Bot branché sur ta fonction : il reçoit les vidéos et répond à /start."
+      : "⚠️ Bot pas encore activé : appuie sur le bouton ci-dessous.";
+    if (b.last_error) st += "\nDernière erreur Telegram : " + b.last_error;
+    $("bStatus").style.whiteSpace = "pre-line";
+    $("bStatus").textContent = st;
+  } catch (e) { $("bStatus").textContent = "Erreur : " + e.message; }
+}
+
+async function saveBot() {
+  $("bMsg").textContent = "Activation...";
+  try {
+    await api("admin_bot_setup", { shop_url: $("bShop").value.trim(), welcome_text: $("bWelcome").value.trim() });
+    $("bMsg").textContent = "Bot activé ✓ Envoie /start à ton bot pour tester.";
+    loadBot();
+  } catch (e) { $("bMsg").textContent = "Erreur : " + e.message; }
+}
+
 loadOrders();
 refreshReviewBadge();
 </script>
 </body></html>
-
