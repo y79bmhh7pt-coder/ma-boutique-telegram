@@ -1842,6 +1842,74 @@ setInterval(function () {
   }).catch(() => {});
 })();
 </script>
+<script>
+(function () {
+  const prev = sendOrder;
+  let sending = false;
+
+  sendOrder = async function () {
+    /* 1ère commande : c'est l'écran de vérification qui gère */
+    if (document.getElementById("cartVid")) { prev(); return; }
+    if (sending) return;
+
+    if (cart.length === 0) { alert("Ton panier est vide."); return; }
+    const mode = document.querySelector('input[name="mode"]:checked');
+    if (!mode) { alert("Choisis la livraison ou le retrait sur place."); return; }
+    const address = document.getElementById("address").value.trim();
+    const details = document.getElementById("details").value.trim();
+    if (mode.value === "Livraison" && !address) { alert("Entre ton adresse de livraison."); return; }
+
+    const username = SELLER_USERNAME.replace(/^@/, "").trim();
+    if (!username || username === "TON_PSEUDO_TELEGRAM") {
+      alert("Ajoute le pseudo Telegram du vendeur dans le code.");
+      return;
+    }
+
+    const bonSel = document.getElementById("bonSelect");
+    const bonId = (bonSel && bonSel.value) || null;
+    const bonText = bonSel && bonSel.value ? bonSel.options[bonSel.selectedIndex].text : "";
+
+    /* on enregistre la commande et on récupère son numéro */
+    sending = true;
+    let num = null;
+    try {
+      const r = await api("order", {
+        bon_id: bonId,
+        items: cart.map(c => ({ code: c.code, i: c.i })),
+        mode: mode.value,
+        address: address
+      });
+      num = r.order_id;
+    } catch (e) {
+      sending = false;
+      alert(e.message);
+      return;
+    }
+
+    let message = "Bonjour, voici ma commande n°" + num + " :\n\n";
+    cart.forEach(item => {
+      message += "- " + item.name +
+        " | grammes : " + item.q +
+        " | Prix : " + money(item.price) + " €\n";
+    });
+    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    message += "\nTotal : " + money(total) + " €";
+    message += "\nMode : " + mode.value;
+    if (mode.value === "Livraison") {
+      message += "\n🚚 Frais de livraison en supplément.";
+      message += "\nLe prix sera communiqué en privé selon votre adresse.";
+      message += "\nAdresse : " + address;
+      if (details) message += "\nPrécisions : " + details;
+    }
+    if (bonText) message += "\n\n🎡🎁 Gain roue : " + bonText;
+
+    cart.length = 0;
+    renderCart();
+    sending = false;
+    window.location.href = "https://t.me/" + username + "?text=" + encodeURIComponent(message);
+  };
+})();
+</script>
 
 
 </body>
