@@ -133,6 +133,12 @@ label{font-size:13px;opacity:.8}
     <div id="bMsg" class="small" style="margin-top:8px"></div>
     <p class="small">À refaire après chaque changement de bot : mets d'abord le nouveau token dans Supabase (BOT_TOKEN), puis appuie sur ce bouton.</p>
   </div>
+  <div class="card">
+    <h3 style="margin-top:0">🧪 Mode test</h3>
+    <div class="small">Pour voir l'écran de vérification avec ton propre compte : tant que le mode test est activé, tu es traité comme un nouveau client (écran de vérification, vidéo, commande en 1ère commande). Pense à le désactiver après.</div>
+    <div id="tState" style="margin:10px 0;font-weight:bold"></div>
+    <button class="ok" id="tBtn" style="width:100%" onclick="toggleTest()">Activer le mode test</button>
+  </div>
 </div>
 
 <div id="historyView" style="display:none">
@@ -393,6 +399,8 @@ async function loadClients() {
   } catch (e) { $("cList").textContent = "Erreur : " + e.message; }
 }
 
+function isVer(c) { return c.verified || (c.orders > 0 && !c.must_verify); }
+
 function renderClients() {
   const list = $("cList");
   const q = $("cSearch").value.trim().toLowerCase().replace(/^@/, "");
@@ -414,7 +422,7 @@ function renderClients() {
       "🛒 " + c.orders + " commande(s) · " + fmtEuro(c.spent) + "\n" +
       "Dernière commande : " + fmtDate(c.last) + "\n" +
       "Inscrit le : " + fmtDate(c.created_at) + "\n" +
-      (c.verified || c.orders > 0 ? "✔ Vérifié" : "⚠️ Non vérifié");
+      (isVer(c) ? "✔ Vérifié" : (c.must_verify ? "🎥 Vidéo à refaire" : "⚠️ Non vérifié"));
     card.appendChild(t);
     const r = document.createElement("div");
     r.className = "row";
@@ -447,9 +455,9 @@ function renderClients() {
     };
     const ver = document.createElement("button");
     ver.className = "no";
-    ver.textContent = c.verified ? "Retirer ✔" : "✅ Marquer vérifié";
+    ver.textContent = isVer(c) ? "🎥 Redemander la vidéo" : "✅ Marquer vérifié";
     ver.onclick = async () => {
-      try { await api("admin_verify", { telegram_id: c.telegram_id, verified: !c.verified }); }
+      try { await api("admin_verify", { telegram_id: c.telegram_id, verified: !isVer(c) }); }
       catch (e) { alert(e.message); }
       loadClients();
     };
@@ -684,9 +692,25 @@ async function loadBot() {
       ? "✅ Bot branché sur ta fonction : il reçoit les vidéos et répond à /start."
       : "⚠️ Bot pas encore activé : appuie sur le bouton ci-dessous.";
     if (b.last_error) st += "\nDernière erreur Telegram : " + b.last_error;
+    TEST_ON = !!b.test_verif;
+    paintTest();
     $("bStatus").style.whiteSpace = "pre-line";
     $("bStatus").textContent = st;
   } catch (e) { $("bStatus").textContent = "Erreur : " + e.message; }
+}
+
+let TEST_ON = false;
+function paintTest() {
+  $("tState").textContent = TEST_ON ? "🧪 Mode test ACTIVÉ : tu es vu comme un nouveau client." : "Mode test désactivé.";
+  $("tBtn").textContent = TEST_ON ? "Désactiver le mode test" : "Activer le mode test";
+  $("tBtn").className = TEST_ON ? "del" : "ok";
+}
+async function toggleTest() {
+  try {
+    await api("admin_test_verif", { on: !TEST_ON });
+    TEST_ON = !TEST_ON;
+    paintTest();
+  } catch (e) { alert(e.message); }
 }
 
 async function saveBot() {
