@@ -2101,6 +2101,160 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
   requestAnimationFrame(frame);
 })();
 </script>
+<style>
+/* catégories : libellés plus petits + icône de la roue corrigée */
+.category>span{font-size:14px !important;padding:6px 12px !important;letter-spacing:1px !important;
+  display:inline-flex !important;align-items:center;white-space:nowrap}
+.category .ic{background:none !important;border:0 !important;padding:0 !important;box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+  width:18px;height:18px;margin-right:6px;display:inline-flex}
+
+/* panier : image, quantité, prix, boutons − et + */
+.cl{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,212,0,.18)}
+.cl:last-child{border-bottom:0}
+.cl .th{flex:0 0 64px;width:64px;height:64px;border-radius:14px;border:1px solid var(--glassBorder);
+  background:#111 center/cover no-repeat;box-shadow:0 0 12px rgba(255,212,0,.18)}
+.cl .info{flex:1;min-width:0}
+.cl .nm{font-weight:700;overflow-wrap:anywhere}
+.cl .sub{font-size:12px;opacity:.75;margin-top:2px}
+.cl .r2{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.stp{display:flex;align-items:center;gap:10px}
+.stp button{width:32px;height:32px;padding:0;border-radius:50%;font-size:18px;line-height:1;
+  background:rgba(255,212,0,.14) !important;color:var(--gold) !important;border:1px solid var(--glassBorder) !important}
+.stp span{min-width:22px;text-align:center;font-weight:800;color:var(--gold)}
+.cl .lt{font-weight:800;color:var(--goldSoft)}
+
+/* pastille du panier + produit qui vole */
+#navCart{position:relative}
+#cartBadge{position:absolute;top:0;right:12px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;
+  background:var(--gold);color:#1c1400;font-size:12px;font-weight:800;display:none;align-items:center;
+  justify-content:center;box-shadow:0 0 10px var(--glow)}
+.fly{position:fixed;left:0;top:0;width:100px;height:100px;border-radius:18px;border:2px solid var(--gold);
+  background:#111 center/cover no-repeat;box-shadow:0 0 22px var(--glow);z-index:30000;pointer-events:none}
+</style>
+<script>
+(function () {
+  const MAX = 20;
+
+  function imgOf(code) {
+    const all = [].concat(products[1] || [], products[2] || []);
+    const p = all.find(x => x.id === code);
+    return p ? (p.image_url || p.image || "") : "";
+  }
+
+  function badge() {
+    const nav = document.getElementById("navCart");
+    if (!nav) return;
+    let b = document.getElementById("cartBadge");
+    if (!b) {
+      b = document.createElement("span");
+      b.id = "cartBadge";
+      nav.appendChild(b);
+    }
+    b.textContent = cart.length;
+    b.style.display = cart.length ? "flex" : "none";
+  }
+
+  /* ---------- Panier : image, quantité, prix, − et + ---------- */
+  renderCart = function () {
+    const box = document.getElementById("cartItems");
+    box.innerHTML = "";
+    if (cart.length === 0) {
+      box.textContent = "Ton panier est vide.";
+    } else {
+      const groups = [];
+      cart.forEach((item, idx) => {
+        const g = groups.find(x => x.item.code === item.code && x.item.i === item.i);
+        if (g) { g.n++; g.last = idx; } else groups.push({ item, n: 1, last: idx });
+      });
+      groups.forEach(g => {
+        const it = g.item;
+        const row = document.createElement("div");
+        row.className = "cl";
+        const th = document.createElement("div");
+        th.className = "th";
+        const src = imgOf(it.code);
+        if (src) th.style.backgroundImage = 'url("' + src + '")';
+        const info = document.createElement("div");
+        info.className = "info";
+        const nm = document.createElement("div");
+        nm.className = "nm";
+        nm.textContent = it.name;
+        const sub = document.createElement("div");
+        sub.className = "sub";
+        sub.textContent = it.q + " g · " + money(it.price) + " € l'unité";
+        const r2 = document.createElement("div");
+        r2.className = "r2";
+        const stp = document.createElement("div");
+        stp.className = "stp";
+        const minus = document.createElement("button");
+        minus.textContent = "−";
+        minus.onclick = () => { cart.splice(g.last, 1); renderCart(); };
+        const n = document.createElement("span");
+        n.textContent = g.n;
+        const plus = document.createElement("button");
+        plus.textContent = "+";
+        plus.onclick = () => { if (g.n < MAX) { cart.push({ ...it }); renderCart(); } };
+        stp.append(minus, n, plus);
+        const lt = document.createElement("div");
+        lt.className = "lt";
+        lt.textContent = money(it.price * g.n) + " €";
+        r2.append(stp, lt);
+        info.append(nm, sub, r2);
+        row.append(th, info);
+        box.appendChild(row);
+      });
+    }
+    document.getElementById("total").textContent =
+      money(cart.reduce((s, i) => s + Number(i.price), 0));
+    badge();
+  };
+
+  /* ---------- Le produit vole vers le panier ---------- */
+  function flyToCart(src, from) {
+    const target = document.querySelector("#navCart svg") || document.getElementById("navCart");
+    if (!target || !from || !from.width) return;
+    const t = target.getBoundingClientRect();
+    const sx = from.left + from.width / 2;
+    const sy = Math.min(from.top + from.height / 2, innerHeight * 0.5);
+    const ex = t.left + t.width / 2;
+    const ey = t.top + t.height / 2;
+    const mx = (sx + ex) / 2;
+    const my = Math.min(sy, ey) - 80;
+    const el = document.createElement("div");
+    el.className = "fly";
+    if (src) el.style.backgroundImage = 'url("' + src + '")';
+    document.body.appendChild(el);
+    const a = el.animate([
+      { transform: "translate(" + (sx - 50) + "px," + (sy - 50) + "px) scale(1)", opacity: 1 },
+      { transform: "translate(" + (mx - 50) + "px," + (my - 50) + "px) scale(.65)", opacity: 1, offset: 0.5 },
+      { transform: "translate(" + (ex - 50) + "px," + (ey - 50) + "px) scale(.12)", opacity: 0.35 }
+    ], { duration: 800, easing: "cubic-bezier(.45,.05,.55,.95)" });
+    a.onfinish = () => {
+      el.remove();
+      const nav = document.getElementById("navCart");
+      if (nav) {
+        nav.animate([{ transform: "scale(1)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }],
+          { duration: 350 });
+      }
+      try { tg.HapticFeedback.notificationOccurred("success"); } catch (_) {}
+    };
+  }
+
+  const baseConfirm = confirmAdd;
+  confirmAdd = function () {
+    const p = currentProduct;
+    const src = p ? (p.image_url || p.image || "") : "";
+    const media = document.getElementById("pMedia");
+    const from = media ? media.getBoundingClientRect() : null;   /* avant la fermeture de la fiche */
+    const before = cart.length;
+    baseConfirm();
+    if (cart.length > before) flyToCart(src, from);
+  };
+
+  renderCart();
+})();
+</script>
 
 
 </body>
