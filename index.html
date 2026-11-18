@@ -2255,6 +2255,540 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
   renderCart();
 })();
 </script>
+<style id="wheelPremium">
+#wheel h2{text-align:center;margin:6px 0 4px}
+#wf{display:flex;flex-direction:column;align-items:center;padding:0 0 28px}
+.wfPts{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;margin:6px 0 4px;
+  background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.02)),rgba(16,12,4,.62);
+  border:1px solid rgba(255,212,0,.4);box-shadow:0 0 16px rgba(255,212,0,.18);font-size:14px;color:#fff}
+.wfPts b{color:#ffe680;font-size:17px}
+.wfPts svg{width:18px;height:18px;fill:#ffd400;filter:drop-shadow(0 0 4px rgba(255,212,0,.7))}
+#wfStage{position:relative;width:min(94vw,440px);aspect-ratio:1;margin:34px auto 20px;--br:200px}
+#wfStage>*{position:absolute}
+#wfShadow{left:8%;right:8%;bottom:-5%;height:9%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(0,0,0,.7),transparent);filter:blur(6px)}
+#wfRim{left:0;top:0;width:100%;height:100%;
+  filter:drop-shadow(0 0 14px rgba(255,212,0,.5)) drop-shadow(0 8px 14px rgba(0,0,0,.6))}
+#wfBulbs{inset:0;pointer-events:none}
+.wfB{position:absolute;left:50%;top:50%;width:3.1%;height:3.1%;margin:-1.55% 0 0 -1.55%;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff 0,#fff3a0 35%,#ffb800 75%,#a86a00 100%);
+  box-shadow:0 0 8px 2px rgba(255,212,0,.75);
+  transform:rotate(var(--a)) translateY(calc(var(--br) * -1))}
+@keyframes wfBlink{0%,100%{opacity:1}50%{opacity:.25}}
+.wfB:nth-child(odd){animation:wfBlink 1.2s infinite}
+.wfB:nth-child(even){animation:wfBlink 1.2s infinite .6s}
+#wf.spin .wfB:nth-child(odd){animation-duration:.28s}
+#wf.spin .wfB:nth-child(even){animation-duration:.28s;animation-delay:.14s}
+#wfDiscBox{inset:7.5%;border-radius:50%;overflow:hidden;background:#000}
+#wfDisc{display:block;will-change:transform}
+#wfSheen{inset:7.5%;border-radius:50%;pointer-events:none;mix-blend-mode:screen;opacity:.55;
+  background:conic-gradient(from 0deg,transparent 0 6%,rgba(255,244,190,.38) 10%,transparent 16% 56%,rgba(255,244,190,.22) 60%,transparent 66%);
+  animation:wfSheen 7s linear infinite}
+@keyframes wfSheen{to{transform:rotate(360deg)}}
+#wfGloss{inset:7.5%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 50% 50%,transparent 0 70%,rgba(0,0,0,.5) 100%),
+             radial-gradient(120% 80% at 30% 18%,rgba(255,255,255,.26),transparent 45%)}
+#wfWin{inset:7.5%;border-radius:50%;pointer-events:none;mix-blend-mode:screen;opacity:0;
+  -webkit-mask:radial-gradient(circle,transparent 0 19%,#000 20%);mask:radial-gradient(circle,transparent 0 19%,#000 20%)}
+#wfWin.on{animation:wfWinA .8s ease-in-out 3}
+@keyframes wfWinA{0%,100%{opacity:0}50%{opacity:1}}
+#wfFx{left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3}
+#wfPointer{left:50%;top:-6%;width:13.5%;margin-left:-6.75%;transform-origin:50% 22%;z-index:5;
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.7)) drop-shadow(0 0 8px rgba(255,70,70,.55))}
+#wfHub{left:50%;top:50%;width:21%;height:21%;transform:translate(-50%,-50%);border-radius:50%;z-index:4;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 28%,#fff6c0,#ffd400 38%,#c98a00 68%,#7a4d00 100%);
+  box-shadow:0 0 0 3px #8a5a00,0 0 0 6px #ffd24a,0 6px 16px rgba(0,0,0,.7),
+             inset 0 -6px 10px rgba(0,0,0,.35),inset 0 4px 8px rgba(255,255,255,.55)}
+#wfHub svg{width:58%;height:58%;filter:drop-shadow(0 1px 1px rgba(255,255,255,.5))}
+#spinBtn{position:relative;overflow:hidden;width:min(86vw,360px);padding:16px 12px;border:0;border-radius:16px;
+  font-size:18px;letter-spacing:1.5px;font-weight:900;color:#1c1400;
+  background:linear-gradient(180deg,#ffe561 0%,#ffd400 45%,#ff9d00 100%);
+  box-shadow:0 8px 22px rgba(255,170,0,.4),inset 0 0 0 1px rgba(255,255,255,.4);transition:transform .12s,opacity .2s}
+#spinBtn:active{transform:scale(.97)}
+#spinBtn:disabled{opacity:.55}
+#spinBtn small{display:block;font-size:12px;font-weight:700;letter-spacing:.5px;opacity:.75;margin-top:2px}
+#wheelResult{min-height:22px;font-weight:800;text-align:center;margin:12px 16px 0;color:#ffe680}
+.wfHint{font-size:12px;opacity:.65;text-align:center;margin-top:6px}
+
+#wfModal{position:fixed;inset:0;z-index:35000;display:none;align-items:center;justify-content:center;padding:18px;
+  background:rgba(0,0,0,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#wfModal.on{display:flex}
+#wfModal .wfRays{position:absolute;left:50%;top:50%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,rgba(255,212,0,.20) 0 6deg,transparent 6deg 18deg);
+  -webkit-mask:radial-gradient(circle,#000 0,transparent 38%);mask:radial-gradient(circle,#000 0,transparent 38%);
+  animation:wfSheen 22s linear infinite}
+#wfModal.lose .wfRays,#wfModal.poor .wfRays{display:none}
+.wfCard{position:relative;width:100%;max-width:340px;text-align:center;padding:26px 20px 20px;border-radius:24px;
+  background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.02)),rgba(14,10,3,.92);
+  border:1.5px solid #ffd400;box-shadow:0 0 34px rgba(255,212,0,.45),0 20px 50px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.2);
+  animation:wfPop .45s cubic-bezier(.2,1.3,.4,1)}
+@keyframes wfPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.wfIco{width:64px;height:64px;margin:-58px auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 28%,#fff6c0,#ffd400 40%,#b87a00 100%);
+  box-shadow:0 0 0 3px #8a5a00,0 0 22px rgba(255,212,0,.8)}
+.wfIco svg{width:60%;height:60%}
+.wfTitle{font-family:var(--fontTitle,Anton,Impact,sans-serif);font-size:30px;letter-spacing:2px;text-transform:uppercase;
+  background:linear-gradient(180deg,#fff6bf,#ffd400 50%,#ff9d00);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 10px rgba(255,212,0,.45))}
+.wfPrize{margin:12px 0 6px;font-size:34px;font-weight:900;line-height:1.1;color:#fff;
+  background:linear-gradient(100deg,#fff 0 40%,#ffe680 48%,#fff 56% 100%);background-size:250% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:wfShine 2.2s linear infinite}
+@keyframes wfShine{from{background-position:150% 0}to{background-position:-100% 0}}
+.wfSub{font-size:14px;opacity:.85;line-height:1.45;margin:6px 0 16px}
+.wfBtns{display:flex;flex-direction:column;gap:10px}
+.wfBtns button{padding:14px;border:0;border-radius:14px;font-size:16px;font-weight:800}
+.wfBtns .g{background:linear-gradient(180deg,#ffe561,#ffd400 45%,#ff9d00);color:#1c1400;box-shadow:0 6px 18px rgba(255,170,0,.4)}
+.wfBtns .s{background:rgba(255,212,0,.12);color:#ffe680;border:1px solid rgba(255,212,0,.4)}
+#wfConf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:36000}
+@media (prefers-reduced-motion:reduce){
+  .wfB,#wfSheen,#wfModal .wfRays,.wfPrize{animation:none !important}
+}
+</style>
+<script>
+(function () {
+  const SEC = document.getElementById("wheel");
+  if (!SEC) return;
+  const REDUCE = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  const FONT = "Anton,'Arial Black',Impact,Inter,Arial,sans-serif";
+  const $ = id => document.getElementById(id);
+  let busy = false, rotNow = 0, S = 0, dirty = true;
+
+  /* ---------- petits outils couleur ---------- */
+  function hexRgb(h) {
+    h = String(h || "#c99a00").trim();
+    if (h[0] === "#") h = h.slice(1);
+    if (h.length === 3) h = h.split("").map(c => c + c).join("");
+    const n = parseInt(h, 16);
+    return isNaN(n) ? [201, 154, 0] : [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgb = c => "rgb(" + c.map(Math.round).join(",") + ")";
+  const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const lum = c => (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255;
+  function haptic(kind, type) {
+    try { if (window.tg && tg.HapticFeedback) tg.HapticFeedback[kind](type); } catch (_) {}
+  }
+
+  /* ---------- décor de la roue ---------- */
+  const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>';
+  const CROWN = '<svg viewBox="0 0 24 24" fill="#5a3600" stroke="#3a2200" stroke-width="1" stroke-linejoin="round"><path d="M3 18l-1-11 5 4 5-8 5 8 5-4-1 11z"/><rect x="3" y="19" width="18" height="2.4" rx="1"/></svg>';
+  const GIFT = '<svg viewBox="0 0 24 24" fill="none" stroke="#3a2200" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8c-2-4-6-3-5 0 1 2 5 0 5 0zM12 8c2-4 6-3 5 0-1 2-5 0-5 0z"/></svg>';
+  const SAD = '<svg viewBox="0 0 24 24" fill="none" stroke="#3a2200" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 16c1.2-1.4 2.6-2 4-2s2.8.6 4 2"/><path d="M9 9.5h.01M15 9.5h.01"/></svg>';
+  const POINTER = '<svg viewBox="0 0 60 80"><defs><linearGradient id="wfPg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a7a"/><stop offset=".55" stop-color="#e01b2f"/><stop offset="1" stop-color="#7d0014"/></linearGradient></defs>' +
+    '<path d="M30 78C30 78 5 47 5 27a25 25 0 1 1 50 0C55 47 30 78 30 78z" fill="url(#wfPg)" stroke="#ffd400" stroke-width="3.5" stroke-linejoin="round"/>' +
+    '<circle cx="30" cy="27" r="11" fill="#fff3a0" stroke="#b87a00" stroke-width="2"/><circle cx="27" cy="23.5" r="4" fill="#fff" opacity=".85"/></svg>';
+
+  function buildDom() {
+    Array.from(SEC.children).forEach(el => {
+      if (!el.classList.contains("back") && el.tagName !== "H2") el.remove();
+    });
+    const wf = document.createElement("div");
+    wf.id = "wf";
+    wf.innerHTML =
+      '<div class="wfPts">' + STAR + '<b id="pts">0</b> pts<span style="opacity:.5">·</span>1 tour = <span id="cost">60</span> pts</div>' +
+      '<div id="wfStage">' +
+        '<div id="wfShadow"></div>' +
+        '<canvas id="wfRim"></canvas>' +
+        '<div id="wfBulbs"></div>' +
+        '<div id="wfDiscBox"><canvas id="wfDisc"></canvas></div>' +
+        '<div id="wfSheen"></div><div id="wfWin"></div><div id="wfGloss"></div>' +
+        '<canvas id="wfFx"></canvas>' +
+        '<div id="wfPointer">' + POINTER + '</div>' +
+        '<div id="wfHub">' + CROWN + '</div>' +
+      '</div>' +
+      '<button id="spinBtn" onclick="spinWheel()">TOURNER LA ROUE<small>Coût : <span class="wfCost">60</span> pts</small></button>' +
+      '<p id="wheelResult"></p>' +
+      '<div class="wfHint">Les gains se récupèrent à la commande.</div>';
+    SEC.appendChild(wf);
+
+    const m = document.createElement("div");
+    m.id = "wfModal";
+    m.innerHTML = '<div class="wfRays"></div><div class="wfCard"><div class="wfIco" id="wfIco"></div>' +
+      '<div class="wfTitle" id="wfTitle"></div><div class="wfPrize" id="wfPrize"></div>' +
+      '<div class="wfSub" id="wfSub"></div><div class="wfBtns" id="wfBtns"></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener("click", e => { if (e.target === m) closeModal(); });
+
+    const cf = document.createElement("canvas");
+    cf.id = "wfConf";
+    cf.style.display = "none";
+    document.body.appendChild(cf);
+  }
+
+  /* ---------- dessin : anneau doré fixe ---------- */
+  function drawRim() {
+    const cv = $("wfRim");
+    cv.width = cv.height = Math.round(S * DPR);
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, S, S);
+    const c = S / 2, R0 = c - 2, R1 = c * 0.885;
+    let g;
+    if (ctx.createConicGradient) {
+      g = ctx.createConicGradient(-Math.PI / 2, c, c);
+      [[0, "#fff4b8"], [.12, "#e0a100"], [.25, "#fff0a0"], [.37, "#9a6500"], [.5, "#ffe27a"],
+       [.62, "#b87a00"], [.75, "#fff0a0"], [.87, "#8a5a00"], [1, "#fff4b8"]].forEach(s => g.addColorStop(s[0], s[1]));
+    } else {
+      g = ctx.createLinearGradient(0, 0, S, S);
+      g.addColorStop(0, "#fff4b8"); g.addColorStop(.5, "#b87a00"); g.addColorStop(1, "#ffe27a");
+    }
+    ctx.beginPath();
+    ctx.arc(c, c, R0, 0, Math.PI * 2);
+    ctx.arc(c, c, R1, 0, Math.PI * 2, true);
+    ctx.fillStyle = g;
+    ctx.fill();
+    // biseaux : liseré clair à l'extérieur, sombre à l'intérieur, reflet au milieu
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,.75)";
+    ctx.beginPath(); ctx.arc(c, c, R0 - 1, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "rgba(60,30,0,.8)";
+    ctx.beginPath(); ctx.arc(c, c, R1 + 1, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "rgba(255,255,255,.35)";
+    ctx.beginPath(); ctx.arc(c, c, (R0 + R1) / 2 + (R0 - R1) * 0.28, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  function drawBulbs() {
+    const box = $("wfBulbs");
+    box.innerHTML = "";
+    const N = 24;
+    $("wfStage").style.setProperty("--br", (S * 0.47) + "px");
+    for (let i = 0; i < N; i++) {
+      const b = document.createElement("div");
+      b.className = "wfB";
+      b.style.setProperty("--a", (i * 360 / N) + "deg");
+      box.appendChild(b);
+    }
+  }
+
+  /* ---------- dessin : disque tournant (cases, séparations, textes) ---------- */
+  function drawDisc() {
+    const cv = $("wfDisc");
+    const D = S * 0.85;
+    cv.width = cv.height = Math.round(D * DPR);
+    cv.style.width = cv.style.height = D + "px";
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, D, D);
+    const cx = D / 2, cy = D / 2, R = D / 2 - 1;
+    const list = (typeof prizes !== "undefined" && prizes && prizes.length) ? prizes : [];
+    if (!list.length) {
+      ctx.fillStyle = "#1a1405";
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffe680"; ctx.font = "700 " + (R * 0.1) + "px " + FONT;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("Chargement…", cx, cy + R * 0.45);
+      return;
+    }
+    const n = list.length, seg = Math.PI * 2 / n;
+
+    list.forEach((p, i) => {
+      const a0 = -Math.PI / 2 + i * seg;
+      const base = hexRgb(p.color);
+      const dark = lum(base) < 0.25;
+      const g = ctx.createRadialGradient(cx, cy, R * 0.08, cx, cy, R);
+      g.addColorStop(0, rgb(mix(base, [255, 255, 255], dark ? 0.18 : 0.38)));
+      g.addColorStop(0.55, rgb(base));
+      g.addColorStop(1, rgb(mix(base, [0, 0, 0], dark ? 0 : 0.4)));
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, R, a0, a0 + seg);
+      ctx.closePath();
+      ctx.fillStyle = g;
+      ctx.fill();
+    });
+
+    // relief : ombre douce vers le bord
+    const sh = ctx.createRadialGradient(cx, cy, R * 0.35, cx, cy, R);
+    sh.addColorStop(0, "rgba(0,0,0,0)");
+    sh.addColorStop(1, "rgba(0,0,0,.3)");
+    ctx.fillStyle = sh;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+
+    // séparations dorées + petits clous sur le bord
+    if (n > 1) {
+      for (let i = 0; i < n; i++) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-Math.PI / 2 + i * seg);
+        const lg = ctx.createLinearGradient(R * 0.18, 0, R, 0);
+        lg.addColorStop(0, "#fff0a0"); lg.addColorStop(0.5, "#e0a100"); lg.addColorStop(1, "#8a5a00");
+        ctx.fillStyle = "rgba(0,0,0,.45)";
+        ctx.fillRect(R * 0.18, -2.4, R * 0.82, 4.8);
+        ctx.fillStyle = lg;
+        ctx.fillRect(R * 0.18, -1.5, R * 0.82, 3);
+        const pg = ctx.createRadialGradient(R - 8, -1.5, 0.5, R - 7, 0, 6);
+        pg.addColorStop(0, "#fff"); pg.addColorStop(0.5, "#ffd400"); pg.addColorStop(1, "#8a5a00");
+        ctx.fillStyle = pg;
+        ctx.beginPath(); ctx.arc(R - 7, 0, 5.2, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    }
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#e0a100";
+    ctx.beginPath(); ctx.arc(cx, cy, R - 1.5, 0, Math.PI * 2); ctx.stroke();
+
+    // textes : toujours à l'endroit (on retourne ceux de la moitié gauche)
+    list.forEach((p, i) => {
+      const theta = (i + 0.5) * seg;                       // depuis le haut, sens horaire
+      const flip = Math.sin(theta) < 0;
+      const rIn = R * 0.27, rOut = R * 0.835, maxW = rOut - rIn;
+      const label = String(p.label || "");
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-Math.PI / 2 + theta + (flip ? Math.PI : 0));
+      let fs = R * 0.15;
+      const hMax = seg * R * 0.5;                          // hauteur disponible dans la case
+      if (fs > hMax) fs = hMax;
+      ctx.font = "800 " + fs + "px " + FONT;
+      const w = ctx.measureText(label).width;
+      if (w > maxW) { fs = fs * maxW / w; ctx.font = "800 " + fs + "px " + FONT; }
+      ctx.textBaseline = "middle";
+      ctx.textAlign = flip ? "left" : "right";
+      const x = flip ? -rOut : rOut;
+      const base = hexRgb(p.color);
+      const tc = hexRgb(p.text_color || (lum(base) < 0.25 ? "#ffd400" : "#000000"));
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(2, fs * 0.16);
+      ctx.strokeStyle = lum(tc) > 0.5 ? "rgba(0,0,0,.65)" : "rgba(255,255,255,.4)";
+      ctx.strokeText(label, x, 0);
+      ctx.fillStyle = rgb(tc);
+      ctx.fillText(label, x, 0);
+      ctx.restore();
+    });
+  }
+
+  function layout() {
+    const stage = $("wfStage");
+    if (!stage || !stage.clientWidth) return false;
+    S = stage.clientWidth;
+    drawRim();
+    drawBulbs();
+    drawDisc();
+    $("wfDisc").style.transform = "rotate(" + rotNow + "deg)";
+    const fx = $("wfFx");
+    fx.width = fx.height = Math.round(S * DPR);
+    dirty = false;
+    return true;
+  }
+  function refreshTexts() {
+    const p = $("pts"), c = $("cost");
+    if (p && typeof points !== "undefined") p.textContent = points;
+    if (c && typeof wheelCost !== "undefined") c.textContent = wheelCost;
+    document.querySelectorAll(".wfCost").forEach(e => { if (typeof wheelCost !== "undefined") e.textContent = wheelCost; });
+  }
+
+  /* ---------- particules pendant la rotation ---------- */
+  let parts = [], fxRun = false;
+  function fxLoop() {
+    const cv = $("wfFx");
+    if (!cv) { fxRun = false; return; }
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, S, S);
+    ctx.globalCompositeOperation = "lighter";
+    parts = parts.filter(p => p.l > 0);
+    parts.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.l -= 0.025;
+      const a = Math.max(0, p.l);
+      ctx.fillStyle = "rgba(255,200,40," + (0.25 * a) + ")";
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 3, 0, 6.283); ctx.fill();
+      ctx.fillStyle = "rgba(255,248,200," + a + ")";
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+    });
+    ctx.globalCompositeOperation = "source-over";
+    if (parts.length || busy) requestAnimationFrame(fxLoop); else fxRun = false;
+  }
+  function emit(n, speedDir) {
+    if (REDUCE) return;
+    const rr = S * 0.435;
+    for (let k = 0; k < n; k++) {
+      const a = Math.random() * 6.283;
+      const tx = -Math.sin(a) * speedDir, ty = Math.cos(a) * speedDir;
+      parts.push({
+        x: S / 2 + Math.cos(a) * rr, y: S / 2 + Math.sin(a) * rr,
+        vx: tx * (1 + Math.random() * 2.2) + Math.cos(a) * Math.random() * 1.4,
+        vy: ty * (1 + Math.random() * 2.2) + Math.sin(a) * Math.random() * 1.4,
+        r: 0.7 + Math.random() * 1.6, l: 0.6 + Math.random() * 0.5
+      });
+    }
+    if (!fxRun) { fxRun = true; requestAnimationFrame(fxLoop); }
+  }
+
+  /* ---------- lecture de l'angle pendant l'animation ---------- */
+  function angleNow() {
+    const t = getComputedStyle($("wfDisc")).transform;
+    const m = t && t.match(/matrix\(([^)]+)\)/);
+    if (!m) return rotNow;
+    const v = m[1].split(",").map(Number);
+    let a = Math.atan2(v[1], v[0]) * 180 / Math.PI;
+    if (a < 0) a += 360;
+    return a;
+  }
+
+  /* ---------- confettis ---------- */
+  function confetti() {
+    if (REDUCE) return;
+    const cv = $("wfConf");
+    cv.style.display = "block";
+    cv.width = innerWidth * DPR; cv.height = innerHeight * DPR;
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const cols = ["#ffd400", "#fff3a0", "#ff9d00", "#ffffff", "#ff4d4d", "#ffcc33"];
+    const bits = [];
+    for (let i = 0; i < 140; i++) {
+      bits.push({
+        x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.38,
+        vx: (Math.random() - 0.5) * 11, vy: -Math.random() * 12 - 3,
+        w: 5 + Math.random() * 7, h: 3 + Math.random() * 5, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.4,
+        c: cols[(Math.random() * cols.length) | 0]
+      });
+    }
+    let t0 = performance.now();
+    (function step(ts) {
+      const el = ts - t0;
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      bits.forEach(b => {
+        b.vy += 0.28; b.vx *= 0.995; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+        ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r);
+        ctx.globalAlpha = Math.max(0, 1 - el / 4200);
+        ctx.fillStyle = b.c; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+        ctx.restore();
+      });
+      if (el < 4200) requestAnimationFrame(step); else { ctx.clearRect(0, 0, innerWidth, innerHeight); cv.style.display = "none"; }
+    })(t0);
+  }
+
+  /* ---------- fenêtre de résultat ---------- */
+  function closeModal() { $("wfModal").classList.remove("on"); }
+  function showResult(kind, label) {
+    const m = $("wfModal");
+    m.className = "on " + kind;
+    const ico = $("wfIco"), title = $("wfTitle"), prize = $("wfPrize"), sub = $("wfSub"), btns = $("wfBtns");
+    btns.innerHTML = "";
+    const can = typeof points !== "undefined" && typeof wheelCost !== "undefined" && points >= wheelCost;
+    const ok = (t, cls, fn) => { const b = document.createElement("button"); b.className = cls; b.textContent = t; b.onclick = fn; btns.appendChild(b); };
+    if (kind === "win") {
+      ico.innerHTML = GIFT; title.textContent = "Félicitations !"; prize.textContent = label;
+      sub.textContent = "Ton gain est enregistré. Tu pourras l'utiliser en choisissant « gain de la roue » au moment de commander.";
+      ok("Super !", "g", closeModal);
+      if (can) ok("Rejouer · " + wheelCost + " pts", "s", () => { closeModal(); spinWheel(); });
+      confetti(); haptic("notificationOccurred", "success");
+    } else if (kind === "replay") {
+      ico.innerHTML = CROWN; title.textContent = "Rejoue !"; prize.textContent = "Tour offert";
+      sub.textContent = "Tes points sont rendus. Retente ta chance tout de suite.";
+      ok("Rejouer", "g", () => { closeModal(); spinWheel(); });
+      ok("Plus tard", "s", closeModal);
+      haptic("notificationOccurred", "success");
+    } else if (kind === "poor") {
+      ico.innerHTML = SAD; title.textContent = "Pas assez de points"; prize.textContent = "";
+      sub.textContent = "Commande pour en gagner, puis reviens tenter ta chance !";
+      ok("OK", "g", closeModal);
+      haptic("notificationOccurred", "warning");
+    } else {
+      ico.innerHTML = SAD; title.textContent = "Dommage…"; prize.textContent = "Perdu";
+      sub.textContent = "Pas de chance cette fois. La prochaine sera la bonne !";
+      if (can) ok("Retenter · " + wheelCost + " pts", "g", () => { closeModal(); spinWheel(); });
+      ok("Fermer", can ? "s" : "g", closeModal);
+      haptic("notificationOccurred", "warning");
+    }
+  }
+
+  /* ---------- tirage + animation (le résultat vient toujours du serveur) ---------- */
+  window.spinWheel = async function () {
+    if (busy) return;
+    if (typeof prizes === "undefined" || !prizes.length) { alert("La roue n'est pas encore prête, réessaie dans un instant."); return; }
+    if (points < wheelCost) { showResult("poor"); return; }
+    busy = true;
+    const btn = $("spinBtn"), wf = $("wf");
+    btn.disabled = true;
+    $("wheelResult").textContent = "";
+    $("wfWin").classList.remove("on");
+    try {
+      const res = await api("spin");
+      const idx = prizes.findIndex(p => p.id === res.id);
+      if (idx < 0) { await loadMe(); throw new Error("La roue vient d'être mise à jour, réessaie."); }
+      points -= wheelCost; refreshTexts();                  // retour visuel immédiat, le serveur confirme ensuite
+      const seg = 360 / prizes.length;
+      const from = rotNow;
+      const to = Math.ceil(from / 360) * 360 + 360 * 6 - (idx * seg + seg / 2);   // la case gagnante finit sous le pointeur
+      const disc = $("wfDisc");
+      const dur = REDUCE ? 1600 : 6400;
+      wf.classList.add("spin");
+      haptic("impactOccurred", "medium");
+
+      const anim = disc.animate(
+        [{ transform: "rotate(" + from + "deg)" }, { transform: "rotate(" + to + "deg)" }],
+        { duration: dur, easing: "cubic-bezier(.2,.62,.1,1)", fill: "forwards" }
+      );
+      let lastA = angleNow(), lastIdx = -1, lastTick = 0;
+      const ptr = $("wfPointer");
+      (function track() {
+        if (anim.playState !== "running") return;
+        const a = angleNow();
+        let d = ((a - lastA + 540) % 360) - 180;
+        lastA = a;
+        const under = Math.floor((((360 - a) % 360)) / seg) % prizes.length;
+        const now = performance.now();
+        if (under !== lastIdx) {
+          if (lastIdx !== -1 && now - lastTick > 60) {
+            lastTick = now;
+            ptr.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(-18deg)" }, { transform: "rotate(0deg)" }], { duration: 110 });
+            haptic("selectionChanged");
+          }
+          lastIdx = under;
+        }
+        emit(Math.min(5, Math.floor(Math.abs(d) / 3)), d >= 0 ? 1 : -1);
+        requestAnimationFrame(track);
+      })();
+
+      await anim.finished;
+      rotNow = to % 360;
+      disc.style.transform = "rotate(" + rotNow + "deg)";
+      anim.cancel();
+      wf.classList.remove("spin");
+
+      const win = $("wfWin");
+      win.style.background = "conic-gradient(from " + (-seg / 2) + "deg, rgba(255,244,180,.6) 0deg " + seg + "deg, transparent " + seg + "deg)";
+      void win.offsetWidth;
+      win.classList.add("on");
+
+      const kind = res.label === "Perdu" ? "lose" : res.label === "Rejoue" ? "replay" : "win";
+      $("wheelResult").textContent =
+        kind === "lose" ? "Dommage, retente !" :
+        kind === "replay" ? "🔁 Rejoue, tes points sont rendus !" :
+        "🎉 Tu as gagné : " + res.label;
+      await loadMe();                                       // points, gains et lots à jour
+      refreshTexts();
+      showResult(kind, res.label);
+    } catch (e) {
+      alert(e.message);
+      wf.classList.remove("spin");
+    }
+    busy = false;
+    btn.disabled = false;
+  };
+
+  /* ---------- branchements avec le code existant ---------- */
+  window.buildWheel = function () {
+    refreshTexts();
+    if (!layout()) dirty = true;
+  };
+  const baseOpenWheel = window.openWheel;
+  window.openWheel = function () {
+    if (baseOpenWheel) baseOpenWheel();
+    requestAnimationFrame(() => { layout(); refreshTexts(); });
+  };
+  let rz;
+  addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (!busy && $("wfStage").clientWidth) layout(); }, 150); });
+
+  buildDom();
+  refreshTexts();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if ($("wfStage").clientWidth) layout(); });
+  if (SEC.offsetWidth) layout();
+})();
+</script>
 
 
 </body>
