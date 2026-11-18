@@ -1910,6 +1910,197 @@ setInterval(function () {
   };
 })();
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Permanent+Marker&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style id="premium">
+:root{
+  /* ===== RÉGLAGES : change ces lignes pour une autre boutique ===== */
+  --gold:#ffd400;          /* couleur principale */
+  --gold2:#ff9d00;         /* bas du dégradé des boutons */
+  --goldSoft:#ffe680;      /* titres et textes clairs */
+  --glass:rgba(16,12,4,.58);
+  --glassBorder:rgba(255,212,0,.38);
+  --glow:rgba(255,212,0,.40);
+  --radius:18px;
+  /* police des titres : essaie 'Anton', 'Bangers' ou 'Permanent Marker' */
+  --fontTitle:'Anton','Bangers',Impact,'Arial Narrow',sans-serif;
+  --fontBody:'Inter','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  --yellow:var(--gold);
+}
+
+/* ---------- Base ---------- */
+body{font-family:var(--fontBody)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 60% at 50% 0%,rgba(255,212,0,.10),transparent 60%),
+             radial-gradient(90% 50% at 50% 100%,rgba(255,150,0,.08),transparent 60%)}
+h1{font-family:var(--fontTitle);font-weight:400;font-size:40px;letter-spacing:2px;text-transform:uppercase;
+  background:linear-gradient(180deg,#fff6bf 0%,var(--gold) 45%,var(--gold2) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 10px var(--glow));transform:skewX(-6deg)}
+h2{font-family:var(--fontTitle);font-weight:400;letter-spacing:1.2px;text-transform:uppercase;font-size:22px;
+  color:var(--goldSoft);text-shadow:0 0 10px var(--glow)}
+header p{opacity:.88}
+
+/* ---------- Verre dépoli ---------- */
+.cart,.card,.pcard{
+  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015)),var(--glass) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(1.3);backdrop-filter:blur(12px) saturate(1.3);
+  border:1px solid var(--glassBorder) !important;border-radius:var(--radius) !important;
+  box-shadow:0 10px 26px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12),0 0 18px rgba(255,212,0,.10)}
+#profileModal{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+
+/* ---------- Catégories ---------- */
+.category{border:1.5px solid var(--gold) !important;border-radius:20px !important;
+  box-shadow:0 0 16px var(--glow),inset 0 0 22px rgba(0,0,0,.5);transition:transform .15s,box-shadow .2s}
+.category:active{transform:scale(.97)}
+.category span{font-family:var(--fontTitle);font-weight:400 !important;font-size:20px;letter-spacing:1.5px;
+  text-transform:uppercase;background:var(--glass) !important;border:1px solid var(--glassBorder);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:12px !important;padding:8px 14px !important}
+
+/* ---------- Boutons dorés ---------- */
+#pAdd,#cartSection>button,#checkoutSection>button:last-of-type,.card button,#spinBtn,#profileCard>button{
+  position:relative;overflow:hidden;border:0;border-radius:14px;
+  background:linear-gradient(180deg,#ffe561 0%,var(--gold) 45%,var(--gold2) 100%) !important;
+  color:#1c1400 !important;font-weight:800;letter-spacing:.3px;
+  box-shadow:0 6px 18px rgba(255,170,0,.35),inset 0 0 0 1px rgba(255,255,255,.35);
+  transition:transform .12s,box-shadow .2s}
+#pAdd:active,#cartSection>button:active,#checkoutSection>button:last-of-type:active,.card button:active,#spinBtn:active{transform:scale(.97)}
+#pAdd::after,#cartSection>button::after,#checkoutSection>button:last-of-type::after,#spinBtn::after{
+  content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);
+  transform:skewX(-20deg);animation:pShine 4.5s infinite}
+@keyframes pShine{0%,70%{left:-60%}100%{left:130%}}
+.back{background:var(--glass) !important;color:var(--goldSoft) !important;border:1px solid var(--glassBorder) !important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.cart-line button,.qbtns button{background:rgba(255,212,0,.14) !important;color:var(--gold) !important;border:1px solid var(--glassBorder) !important}
+
+/* ---------- Champs ---------- */
+input:not([type=radio]):not([type=checkbox]),select,textarea{
+  background:rgba(8,6,2,.7) !important;color:#fff !important;
+  border:1px solid var(--glassBorder) !important;border-radius:12px !important;color-scheme:dark}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !important;box-shadow:0 0 0 3px rgba(255,212,0,.22)}
+.cart-line{border-bottom:1px solid rgba(255,212,0,.18)}
+.total{font-family:var(--fontTitle);font-weight:400;font-size:26px;letter-spacing:1px;text-shadow:0 0 12px var(--glow)}
+
+/* ---------- Produits ---------- */
+.pcard{overflow:hidden;transition:transform .15s}
+.pcard:active{transform:scale(.98)}
+.pcard img{transition:transform .35s}
+.pcard:active img{transform:scale(1.05)}
+.pcard .pname{font-weight:700}
+.pcard .pprice{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:999px;
+  background:rgba(255,212,0,.14);border:1px solid var(--glassBorder);color:var(--goldSoft)}
+#pModal{background:radial-gradient(100% 50% at 50% 0%,rgba(255,212,0,.12),transparent 60%),#050403}
+#pBody h2{font-size:28px}
+.popt{background:var(--glass);border:1px solid var(--glassBorder);border-radius:14px}
+.popt.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 16px var(--glow);background:rgba(255,212,0,.12)}
+#pQty button{background:var(--glass) !important;color:var(--gold) !important;border:1px solid var(--glassBorder);
+  box-shadow:0 0 10px rgba(255,212,0,.2)}
+
+/* ---------- Barre du bas flottante et barre de points ---------- */
+#navBar{left:10px !important;right:10px !important;bottom:calc(10px + env(safe-area-inset-bottom,0px)) !important;
+  border:1px solid var(--glassBorder) !important;border-radius:24px;background:rgba(10,8,3,.72) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);
+  box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 18px rgba(255,212,0,.15);padding:8px 6px !important}
+#navBar button.on{border:0 !important;background:rgba(255,212,0,.14) !important;color:var(--gold);box-shadow:0 0 14px var(--glow)}
+#musicButton{bottom:104px !important;border-radius:16px !important;background:var(--glass) !important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#musicPanel{bottom:166px !important}
+#ptsBar{background:rgba(8,6,2,.78) !important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--glassBorder) !important;color:var(--goldSoft) !important;
+  box-shadow:0 4px 20px rgba(0,0,0,.4)}
+
+/* ---------- Icônes ---------- */
+.ic{display:inline-flex;vertical-align:-4px;margin-right:8px;width:24px;height:24px}
+.ic svg{width:100%;height:100%;fill:none;stroke:var(--gold);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 4px var(--glow))}
+
+@media (prefers-reduced-motion:reduce){
+  #pAdd::after,#cartSection>button::after,#checkoutSection>button:last-of-type::after,#spinBtn::after{animation:none}
+}
+</style>
+<script>
+(function () {
+  /* ---------- Icônes uniformes (remplacent les emojis des titres) ---------- */
+  const ICONS = {
+    cart: '<svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11l2-8H6"/></svg>',
+    box: '<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>',
+    wheel: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3v7M12 14v7M3 12h7M14 12h7M5.6 5.6l5 5M13.4 13.4l5 5M18.4 5.6l-5 5M10.6 13.4l-5 5"/></svg>',
+    gift: '<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8c-2-4-6-3-5 0 1 2 5 0 5 0zM12 8c2-4 6-3 5 0-1 2-5 0-5 0z"/></svg>'
+  };
+  function swapIcon(el, emoji, name) {
+    if (!el) return;
+    const n = el.firstChild;
+    if (n && n.nodeType === 3 && n.nodeValue.trim().indexOf(emoji) === 0) {
+      n.nodeValue = n.nodeValue.replace(emoji, "").replace(/^\s+/, "");
+      const s = document.createElement("span");
+      s.className = "ic";
+      s.innerHTML = ICONS[name];
+      el.insertBefore(s, el.firstChild);
+    }
+  }
+  swapIcon(document.querySelector("#cartSection h2"), "🛒", "cart");
+  swapIcon(document.querySelector("#checkoutSection h2"), "📦", "box");
+  swapIcon(document.querySelector("#wheel h2"), "🎡", "wheel");
+  document.querySelectorAll(".category span").forEach(s => {
+    if (s.textContent.indexOf("🎡") >= 0) {
+      s.textContent = s.textContent.replace("🎡", "").trim();
+      const i = document.createElement("span");
+      i.className = "ic";
+      i.innerHTML = ICONS.wheel;
+      s.insertBefore(i, s.firstChild);
+    }
+  });
+
+  /* ---------- Vibration légère sur les boutons ---------- */
+  document.addEventListener("pointerdown", e => {
+    if (e.target.closest("button,.pcard,.category,.popt") && window.tg && tg.HapticFeedback) {
+      try { tg.HapticFeedback.impactOccurred("light"); } catch (_) {}
+    }
+  }, { passive: true });
+
+  /* ---------- Étincelles (désactivées sur les téléphones lents) ---------- */
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const weak = (navigator.deviceMemory && navigator.deviceMemory < 3) ||
+               (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 3);
+  if (reduce || weak) return;
+
+  const cv = document.createElement("canvas");
+  cv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1";
+  document.body.appendChild(cv);
+  const cx = cv.getContext("2d");
+  let W = 0, H = 0;
+  function size() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+  size();
+  addEventListener("resize", size);
+
+  const P = [];
+  for (let i = 0; i < 22; i++) {
+    P.push({ x: Math.random() * W, y: Math.random() * H, r: 0.8 + Math.random() * 1.8,
+             v: 0.15 + Math.random() * 0.35, t: Math.random() * 6.28 });
+  }
+  let last = 0;
+  function frame(ts) {
+    requestAnimationFrame(frame);
+    if (document.hidden || ts - last < 33) return;
+    last = ts;
+    cx.clearRect(0, 0, W, H);
+    P.forEach(p => {
+      p.y -= p.v; p.t += 0.04;
+      if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
+      cx.globalAlpha = 0.25 + 0.55 * Math.abs(Math.sin(p.t));
+      cx.fillStyle = "#ffd400";
+      cx.shadowColor = "#ffb300";
+      cx.shadowBlur = 8;
+      cx.beginPath();
+      cx.arc(p.x, p.y, p.r, 0, 6.283);
+      cx.fill();
+    });
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
 
 
 </body>
