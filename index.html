@@ -2789,6 +2789,180 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
   if (SEC.offsetWidth) layout();
 })();
 </script>
+<style>
+/* le panier n'apparaît plus sur l'accueil : il a son propre écran */
+#cartSection{display:none !important}
+#cartSection.on{display:block !important}
+/* la tuile « roue » quitte l'accueil : elle est dans l'onglet Jeux */
+.category[onclick*="openWheel"]{display:none !important}
+
+/* panier vide : ton image */
+#cartSection.empty{background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+#cartSection.empty>h2,#cartSection.empty>.total,#cartSection.empty>button,#cartSection.empty #cartVid{display:none !important}
+.emptyArt{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(255,212,0,.4);box-shadow:0 0 26px rgba(255,212,0,.35)}
+.emptyArt img{display:block;width:100%;height:auto}
+.emptyGo{position:absolute;left:21.2%;width:57.9%;top:90.9%;height:6.3%;padding:0;border:0;border-radius:40px;
+  background:transparent !important;box-shadow:none !important}
+.emptyTxt{text-align:center;padding:30px 10px}
+.emptyTxt button{margin-top:14px}
+
+/* onglet Jeux */
+#gamesSection h2{margin:4px 0 2px}
+.gcard{position:relative;border-radius:20px;overflow:hidden;margin:14px 0;min-height:200px;display:flex;flex-direction:column;
+  justify-content:flex-end;border:1.5px solid var(--gold,#ffd400);background:#111 center/cover no-repeat;
+  box-shadow:0 0 18px var(--glow,rgba(255,212,0,.4)),inset 0 0 30px rgba(0,0,0,.5)}
+.gcard::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.88))}
+.gcard>*{position:relative}
+.gcard .gb{padding:16px}
+.gcard h3{margin:0;font-family:var(--fontTitle,Anton,Impact,sans-serif);font-weight:400;font-size:26px;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--goldSoft,#ffe680);text-shadow:0 0 10px var(--glow,rgba(255,212,0,.4))}
+.gcard p{margin:6px 0 10px;font-size:13px;opacity:.9}
+.gcard .gm{display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(255,212,0,.14);
+  border:1px solid rgba(255,212,0,.4);font-size:12px;color:#ffe680;margin-bottom:10px}
+.gcard button{display:block;width:100%;padding:13px;border:0;border-radius:14px;font-weight:800;font-size:16px;color:#1c1400;
+  background:linear-gradient(180deg,#ffe561,#ffd400 45%,#ff9d00);box-shadow:0 6px 18px rgba(255,170,0,.35)}
+.gcard.soon{min-height:120px;opacity:.8;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.01)),rgba(16,12,4,.6)}
+.gcard.soon::before{display:none}
+.gcard.soon h3{font-size:20px}
+</style>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  let current = "home";
+
+  /* ---------- gestion des écrans ---------- */
+  function hideAll() {
+    ["home", "products", "wheel", "gamesSection", "checkoutSection"].forEach(id => {
+      const e = $(id);
+      if (e) e.classList.add("hidden");
+    });
+    const c = $("cartSection");
+    if (c) c.classList.remove("on");
+  }
+  function navFor(s) { return s === "cart" ? "navCart" : (s === "games" || s === "wheel") ? "navGames" : "navHome"; }
+  function screen(name) {
+    hideAll();
+    current = name;
+    if (name === "home") $("home").classList.remove("hidden");
+    else if (name === "games") $("gamesSection").classList.remove("hidden");
+    else if (name === "cart") $("cartSection").classList.add("on");
+    setNav(navFor(name));
+    window.scrollTo({ top: 0 });
+  }
+
+  setNav = function (id) {
+    ["navHome", "navCart", "navGames", "navProfile"].forEach(n => {
+      const e = $(n);
+      if (e) e.classList.toggle("on", n === id);
+    });
+  };
+  showHome = function () { screen("home"); };
+
+  const baseCat = openCategory;
+  openCategory = function (n) { hideAll(); current = "products"; setNav("navHome"); baseCat(n); };
+  const baseWheel = openWheel;
+  openWheel = function () { hideAll(); current = "wheel"; setNav("navGames"); baseWheel(); };
+
+  window.openCart = function () { renderCart(); screen("cart"); };
+  goCart = function () { closeProfile(); openCart(); };
+  window.goGames = function () { closeProfile(); renderGames(); screen("games"); };
+  const baseClose = closeProfile;
+  closeProfile = function () { baseClose(); setNav(navFor(current)); };
+
+  /* ---------- bouton manette dans la barre du bas ---------- */
+  const gb = document.createElement("button");
+  gb.id = "navGames";
+  gb.onclick = () => goGames();
+  gb.innerHTML =
+    '<svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 4 4v1a3 3 0 0 1-5.2 2l-1.3-1.5h-7L7.2 15A3 3 0 0 1 2 13v-1a4 4 0 0 1 4-4z"/>' +
+    '<path d="M7.5 10.5v3M6 12h3"/><circle cx="15.5" cy="11.2" r=".8"/><circle cx="17.7" cy="12.8" r=".8"/></svg>Jeux';
+  $("navCart").insertAdjacentElement("afterend", gb);
+
+  /* ---------- panier vide : ton image ---------- */
+  function paintEmpty() {
+    const sec = $("cartSection"), box = $("cartItems");
+    const empty = typeof cart !== "undefined" && cart.length === 0;
+    sec.classList.toggle("empty", empty);
+    if (!empty) return;
+    box.innerHTML =
+      '<div class="emptyArt"><img src="panier-vide.jpg" alt="Panier vide">' +
+      '<button class="emptyGo" aria-label="Découvrir la boutique"></button></div>';
+    box.querySelector(".emptyGo").onclick = () => showHome();
+    box.querySelector("img").onerror = () => {
+      box.innerHTML = '<div class="emptyTxt">Ton panier est vide.<br><button>Découvrir la boutique</button></div>';
+      box.querySelector("button").onclick = () => showHome();
+    };
+  }
+  const baseRender = renderCart;
+  renderCart = function () { baseRender(); paintEmpty(); };
+
+  /* ---------- liste des jeux ----------
+     Pour ajouter un jeu plus tard : copie un bloc { ... } ci-dessous,
+     change le nom, la description, l'image et la fonction open. */
+  const GAMES = [
+    {
+      name: "Roue de chance",
+      desc: "Tourne la roue et gagne des réductions et des cadeaux.",
+      img: "roue-chance.JPG",
+      meta: () => "⭐ " + points + " pts · 1 tour = " + wheelCost + " pts",
+      open: () => openWheel()
+    }
+  ];
+  function renderGames() {
+    let sec = $("gamesSection");
+    if (!sec) {
+      sec = document.createElement("section");
+      sec.id = "gamesSection";
+      sec.className = "hidden";
+      $("products").insertAdjacentElement("afterend", sec);
+    }
+    sec.innerHTML = "";
+    const h = document.createElement("h2");
+    h.textContent = "Jeux";
+    const sub = document.createElement("p");
+    sub.className = "small";
+    sub.textContent = "Joue avec tes points et gagne des lots.";
+    sec.append(h, sub);
+    GAMES.forEach(g => {
+      const c = document.createElement("div");
+      c.className = "gcard";
+      if (g.img) c.style.backgroundImage = 'url("' + g.img + '")';
+      const b = document.createElement("div");
+      b.className = "gb";
+      const t = document.createElement("h3");
+      t.textContent = g.name;
+      const d = document.createElement("p");
+      d.textContent = g.desc;
+      b.append(t, d);
+      if (g.meta) {
+        const m = document.createElement("span");
+        m.className = "gm";
+        try { m.textContent = g.meta(); } catch (_) { m.textContent = ""; }
+        b.appendChild(m);
+      }
+      const btn = document.createElement("button");
+      btn.textContent = "Jouer";
+      btn.onclick = g.open;
+      b.appendChild(btn);
+      c.appendChild(b);
+      sec.appendChild(c);
+    });
+    const soon = document.createElement("div");
+    soon.className = "gcard soon";
+    soon.innerHTML = '<div class="gb"><h3>🔒 Nouveaux jeux</h3><p>D\'autres jeux arrivent bientôt. Reste connecté !</p></div>';
+    sec.appendChild(soon);
+  }
+
+  /* le bouton « Retour » de la roue ramène à la liste des jeux */
+  const wb = document.querySelector("#wheel .back");
+  if (wb) wb.onclick = () => goGames();
+
+  renderGames();
+  renderCart();
+  screen("home");
+})();
+</script>
 
 
 </body>
