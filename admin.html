@@ -90,6 +90,8 @@ label{font-size:13px;opacity:.8}
     <div id="sMsg" class="small" style="margin-top:8px"></div>
   </div>
 
+  <div class="card" id="slotAdm">Chargement...</div>
+
   <button class="ok" style="width:100%" onclick="openPrize()">➕ Nouveau lot</button>
   <div id="wForm" class="card">
     <h3 id="wTitle" style="margin-top:0">Lot</h3>
@@ -176,7 +178,7 @@ function show(t) {
   if (t === "orders") loadOrders();
   else if (t === "products") loadProducts();
   else if (t === "clients") loadClients();
-  else if (t === "wheel") loadWheel();
+  else if (t === "wheel") { loadWheel(); loadSlotAdmin(); }
   else if (t === "reviews") loadReviews();
   else if (t === "bot") loadBot();
   else loadHistory();
@@ -680,6 +682,40 @@ async function loadReviews() {
       list.appendChild(c);
     });
   } catch (e) { list.textContent = "Erreur : " + e.message; }
+}
+
+/* ---------- MACHINE À SOUS ---------- */
+const SLF = [["bp_replay","🔁 Rejouer (%)",1],["bp_star","⭐⭐⭐ (%)",1],["bp_bell","🔔🔔🔔 (%)",1],["bp_rep3","🔁🔁🔁 (%)",1],
+  ["bp_seven","777 (%)",1],["bp_jackpot","💎💎💎 Jackpot (%)",1],["r_star","Gain ⭐⭐⭐ (pts)",0],["r_bell","Gain 🔔🔔🔔 (pts)",0],
+  ["r_rep3","Gain 🔁🔁🔁 (pts)",0],["r_seven","Gain 777 (pts)",0],["r_jackpot","Gain jackpot (pts)",0]];
+function slotCalc() {
+  const v = k => Number($("sf_" + k).value) || 0, cost = Number($("sc").value) || 1;
+  const pct = k => v("bp_" + k);
+  const sum = pct("replay") + pct("star") + pct("bell") + pct("rep3") + pct("seven") + pct("jackpot");
+  const ev = (pct("replay") * cost + pct("star") * v("r_star") + pct("bell") * v("r_bell") + pct("rep3") * v("r_rep3") +
+    pct("seven") * v("r_seven") + pct("jackpot") * v("r_jackpot")) / 100;
+  $("slSum").textContent = "Aucun bonus : " + (100 - sum).toFixed(2) + " % · Retour théorique : " + (ev / cost * 100).toFixed(1) +
+    " %" + (sum > 100 ? " ⚠️ total > 100 %" : "") + (ev / cost > 1 ? " ⚠️ les joueurs gagnent des points en moyenne" : "");
+}
+async function loadSlotAdmin() {
+  const box = $("slotAdm");
+  try {
+    const d = await api("admin_slot_get"), c = d.cfg;
+    let h = '<h3 style="margin-top:0">🎰 Machine à sous</h3><label>Coût d\'un tour (points)</label><input id="sc" type="number" min="1" value="' + c.cost + '" oninput="slotCalc()">';
+    SLF.forEach(f => { h += "<label>" + f[1] + '</label><input id="sf_' + f[0] + '" type="number" min="0" step="' + (f[2] ? "0.01" : "1") +
+      '" value="' + (f[2] ? c[f[0]] / 100 : c[f[0]]) + '" oninput="slotCalc()">'; });
+    h += '<div id="slSum" class="small" style="margin:6px 0"></div><button class="ok" style="width:100%" onclick="saveSlot()">💾 Enregistrer</button>' +
+      '<div id="slMsg2" class="small" style="margin-top:8px"></div><div class="small" style="margin-top:8px">Parties : ' + d.stats.plays +
+      " · Mises : " + d.stats.stake + " pts · Gains versés : " + d.stats.paid + " pts" +
+      (d.stats.stake ? " · Retour réel : " + (d.stats.paid / d.stats.stake * 100).toFixed(1) + " %" : "") + "</div>";
+    box.innerHTML = h; slotCalc();
+  } catch (e) { box.textContent = "Erreur : " + e.message; }
+}
+async function saveSlot() {
+  const o = { cost: Number($("sc").value) };
+  SLF.forEach(f => { const x = Number($("sf_" + f[0]).value) || 0; o[f[0]] = f[2] ? Math.round(x * 100) : x; });
+  try { await api("admin_slot_save", o); $("slMsg2").textContent = "Enregistré ✓"; loadSlotAdmin(); }
+  catch (e) { $("slMsg2").textContent = "Erreur : " + e.message; }
 }
 
 /* ---------- BOT ---------- */
