@@ -3029,6 +3029,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
 @keyframes slZ{to{transform:scale(1.06)}}
 #slJack .am{position:relative;font-size:44px;font-weight:900;color:#fff;text-shadow:0 0 18px #FFD76A}
 #slJack button{position:relative;margin-top:22px;padding:14px 34px;border:0;border-radius:16px;font-weight:900;font-size:17px;color:#1c1400;background:linear-gradient(180deg,#FFF3B0,#FFD76A 45%,#D4AF37)}
+.sl-bet{margin:12px 0 0;text-align:center}
+.sl-bl{font-size:12px;opacity:.75;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+#slChips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+#slChips button{padding:9px 14px;border-radius:999px;font-weight:800;font-size:14px;background:rgba(22,13,32,.95) !important;color:#FFD76A !important;border:1.5px solid rgba(212,175,55,.6) !important}
+#slChips button.on{background:linear-gradient(180deg,#FFF3B0,#FFD76A 45%,#D4AF37) !important;color:#1c1400 !important;box-shadow:0 0 14px rgba(255,215,106,.6)}
+#slChips button:disabled{opacity:.35}
 @media (prefers-reduced-motion:reduce){.sl-bulbs i,#slJack .cr,#slJack h1{animation:none !important}}
 </style>
 <script>
@@ -3038,7 +3044,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
   const DPR = Math.min(devicePixelRatio || 1, 2);
   const KEYS = ["star", "bell", "seven", "diamond", "cherry", "replay"];
   const CROWN = '<svg viewBox="0 0 100 76"><defs><linearGradient id="gCr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF3B0"/><stop offset=".5" stop-color="#FFD76A"/><stop offset="1" stop-color="#B8901f"/></linearGradient></defs><path d="M8 62L2 18l24 18L50 4l24 32L98 18l-6 44z" fill="url(#gCr)" stroke="#8a6a10" stroke-width="2.5" stroke-linejoin="round"/><rect x="8" y="64" width="84" height="9" rx="3" fill="url(#gCr)" stroke="#8a6a10" stroke-width="2"/><circle cx="50" cy="30" r="6" fill="#7026B9" stroke="#FFD76A" stroke-width="2"/><circle cx="24" cy="44" r="4" fill="#b46cff"/><circle cx="76" cy="44" r="4" fill="#b46cff"/></svg>';
-  let INFO = null, busy = false, keyPending = null, cur = [];
+  let INFO = null, busy = false, keyPending = null, cur = [], bet = 0;
 
   /* ---------- symboles (une seule fois dans la page) ---------- */
   const sp = document.createElement("div");
@@ -3074,7 +3080,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
     '<div class="sl-cab" id="slCab"><div class="sl-bulbs" id="slB1"></div><div class="sl-win" id="slWin">' +
     '<div class="sl-reel"><div class="sl-strip"></div></div><div class="sl-reel"><div class="sl-strip"></div></div><div class="sl-reel"><div class="sl-strip"></div></div>' +
     '<div class="sl-line"></div><div class="sl-glass"></div></div><div class="sl-bulbs" id="slB2" style="margin:10px 0 -6px"></div></div>' +
-    '<div class="sl-msg" id="slMsg">Tente ta chance !</div>' +
+    '<div class="sl-bet"><div class="sl-bl">Ta mise</div><div id="slChips"></div></div><div class="sl-msg" id="slMsg">Choisis ta mise et tente ta chance !</div>' +
     '<button id="slSpin">TOURNER<small id="slCost"></small></button>' +
     '<div class="sl-tabs"><button data-p="slRules">Règles</button><button data-p="slHist">Historique</button></div>' +
     '<div class="sl-panel" id="slRules"></div><div class="sl-panel" id="slHist"></div></div>';
@@ -3085,26 +3091,43 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
   setIdle([[pick(), pick(), pick()], ["star", "seven", "diamond"], [pick(), pick(), pick()]]);
 
   /* ---------- infos serveur (règles = probabilités réelles) ---------- */
-  const LAB = { jackpot: ["MEGA JACKPOT", ["diamond", "diamond", "diamond"]], seven: ["Gros gain", ["seven", "seven", "seven"]],
-    rep3: ["Gain rare", ["replay", "replay", "replay"]], bell: ["Gain spécial", ["bell", "bell", "bell"]],
-    star: ["Gain", ["star", "star", "star"]], replay: ["Rejouer (mise rendue)", ["replay", "replay", null]] };
+  const LAB = { jackpot: ["MEGA JACKPOT", "diamond"], seven: ["Gros gain", "seven"], rep3: ["Gain rare", "replay"], bell: ["Gain spécial", "bell"], star: ["Gain", "star"] };
+  const gainFor = m => Math.max(bet + 1, Math.floor(bet * m));
+  function rules() {
+    if (!INFO) return;
+    let h = '<div class="sl-note" style="margin:0 0 6px">Ta mise : <b>' + bet + ' pts</b>. Plus elle est grande, plus le gain est grand.</div>';
+    ["jackpot", "seven", "rep3", "bell", "star"].forEach(k => {
+      const x = LAB[k][1];
+      h += '<div class="sl-row"><div class="ic3">' + sym(x) + sym(x) + sym(x) + '</div><div class="lb">' + LAB[k][0] + '</div><div class="pc">×' +
+        String(INFO.mult[k]).replace(".", ",") + '</div><div class="gn">+' + gainFor(INFO.mult[k]) + ' pts</div></div>';
+    });
+    h += '<div class="sl-row"><div class="ic3">' + sym("replay") + sym("replay") + '<span style="width:22px;text-align:center">+?</span></div><div class="lb">Rejouer</div><div class="pc"></div><div class="gn">mise rendue</div></div>' +
+      '<div class="sl-note">Si le tirage ne donne rien, la mise est perdue : pas grave, ce sera pour la prochaine fois ! Les résultats sont tirés au hasard par le serveur ; chaque partie est enregistrée et créditée une seule fois. Jeu réservé aux personnes majeures : joue avec modération.</div>';
+    $("slRules").innerHTML = h;
+  }
+  function chips() {
+    if (!INFO) return;
+    const box = $("slChips"); box.innerHTML = "";
+    let set = [10, 20, 50, 100, 200, 500, 1000].filter(v => v >= INFO.min_bet && v <= INFO.max_bet);
+    if (!set.includes(INFO.min_bet)) set.unshift(INFO.min_bet);
+    const all = Math.min(INFO.max_bet, points);
+    if (all >= INFO.min_bet && !set.includes(all)) set.push(all);
+    set = set.sort((a, b) => a - b);
+    set.forEach(v => {
+      const b = document.createElement("button");
+      b.textContent = (v === all && !([10, 20, 50, 100, 200, 500, 1000].includes(v))) ? "TOUT " + v : v;
+      b.disabled = v > points;
+      if (v === bet) b.classList.add("on");
+      b.onclick = () => { if (busy) return; bet = v; chips(); rules(); };
+      box.appendChild(b);
+    });
+    $("slCost").textContent = "Mise : " + bet + " pts";
+  }
   async function loadInfo() {
     try { INFO = await api("slot_info"); } catch (e) { return; }
-    $("slCost").textContent = "Mise : " + INFO.cost + " pts";
-    const m = document.querySelector("#slotCard .gm"); if (m) m.textContent = "⭐ " + points + " pts · mise " + INFO.cost + " pts";
-    let h = "";
-    INFO.outcomes.forEach(o => {
-      const l = LAB[o.key];
-      h += '<div class="sl-row"><div class="ic3">' + l[1].map(k => k ? sym(k) : '<span style="width:22px;text-align:center">+?</span>').join("") + '</div><div class="lb">' + l[0] +
-        '</div><div class="pc">' + fmt(o.bp) + '</div><div class="gn">' + (o.key === "replay" ? "+" + o.reward : "+" + o.reward) + " pts</div></div>";
-    });
-    h += '<div class="sl-row"><div class="lb">Aucun bonus</div><div class="pc">' + fmt(INFO.none_bp) + '</div><div class="gn">0</div></div>';
-    const win = INFO.outcomes.filter(o => ["star", "bell", "rep3", "seven"].includes(o.key)).reduce((s, o) => s + o.bp, 0);
-    h += '<div class="sl-note"><b>En résumé :</b> ' + fmt(INFO.outcomes.find(o => o.key === "replay").bp) + " rejouer · " + fmt(INFO.none_bp) + " aucun bonus · " +
-      fmt(win) + " gain (⭐ 🔔 🔁 7) · " + fmt(INFO.outcomes.find(o => o.key === "jackpot").bp) + " MEGA JACKPOT.</div>" +
-      '<div class="sl-note">Mise de ' + INFO.cost + " pts par tour. Taux de retour théorique : " + (INFO.rtp * 100).toFixed(1).replace(".", ",") +
-      " %. Les résultats sont tirés au hasard par le serveur, chaque partie est enregistrée et créditée une seule fois. Jeu réservé aux personnes majeures : joue avec modération.</div>";
-    $("slRules").innerHTML = h;
+    if (!bet || bet < INFO.min_bet || bet > INFO.max_bet) bet = Math.min(INFO.max_bet, Math.max(INFO.min_bet, Math.min(20, points) || INFO.min_bet));
+    const m = document.querySelector("#slotCard .gm"); if (m) m.textContent = "⭐ " + points + " pts · mise de " + INFO.min_bet + " à " + INFO.max_bet + " pts";
+    chips(); rules();
   }
   const ago = t => { const m = Math.round((Date.now() - new Date(t)) / 60000); return m < 1 ? "à l'instant" : m < 60 ? "il y a " + m + " min" : m < 1440 ? "il y a " + Math.round(m / 60) + " h" : new Date(t).toLocaleDateString("fr-FR"); };
   async function loadHist() {
@@ -3182,28 +3205,30 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
     if (busy) return;
     if (!INFO) await loadInfo();
     if (!INFO) { $("slMsg").textContent = "Machine indisponible, réessaie."; return; }
-    if (points < INFO.cost) { $("slMsg").textContent = "Pas assez de points (" + INFO.cost + " pts)"; hap("notificationOccurred", "warning"); return; }
+    if (points < bet) { $("slMsg").textContent = "Solde insuffisant pour cette mise."; chips(); hap("notificationOccurred", "warning"); return; }
     busy = true; $("slSpin").disabled = true;
     const cab = $("slCab"); cab.classList.remove("win");
     $("slMsg").textContent = "…";
     if (!keyPending) keyPending = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
-    let res;
-    try { res = await api("slot_spin", { key: keyPending }); keyPending = null; }
+    const b0 = bet; let res;
+    try { res = await api("slot_spin", { key: keyPending, bet: b0 }); keyPending = null; }
     catch (e) {
-      if (!(e instanceof TypeError)) keyPending = null;          // erreur réseau : on garde la même clé (pas de double débit)
+      if (!(e instanceof TypeError)) keyPending = null;          // erreur réseau : même clé, jamais de double débit
       $("slMsg").textContent = e instanceof TypeError ? "Connexion perdue, réessaie." : e.message;
       busy = false; $("slSpin").disabled = false; return;
     }
-    setBal(points - INFO.cost);                                  // la mise est débitée
+    setBal(points - b0); chips();
     cab.classList.add("go"); hap("impactOccurred", "medium");
     await spinReels(res);
     cab.classList.remove("go");
     setBal(res.points);
     const net = res.reward - res.cost;
     if (res.outcome === "jackpot") { cab.classList.add("win"); $("slMsg").innerHTML = "💎 MEGA JACKPOT !<small>+" + res.reward + " pts</small>"; jackpot(res.reward); }
-    else if (res.outcome === "replay") { $("slMsg").innerHTML = "🔁 Rejoue !<small>Ton tour est offert : mise rendue (+" + res.reward + " pts)</small>"; hap("notificationOccurred", "success"); }
+    else if (res.outcome === "replay") { $("slMsg").innerHTML = "🔁 Rejoue !<small>Ta mise est rendue (+" + res.reward + " pts)</small>"; hap("notificationOccurred", "success"); }
     else if (res.reward > 0) { cab.classList.add("win"); $("slMsg").innerHTML = "Gagné ! +" + res.reward + " pts<small>mise " + res.cost + " · gain net +" + net + " pts</small>"; hap("notificationOccurred", "success"); }
-    else { $("slMsg").innerHTML = "Pas de bonus cette fois<small>Retente ta chance !</small>"; }
+    else { $("slMsg").innerHTML = "Pas grave, ce sera pour la prochaine fois !<small>Retente ta chance quand tu veux.</small>"; }
+    if (points < bet) bet = Math.max(INFO.min_bet, Math.min(bet, points));
+    chips(); rules();
     if ($("slHist").classList.contains("on")) loadHist();
     busy = false; $("slSpin").disabled = false;
   }
@@ -3220,7 +3245,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
     const c = document.createElement("div");
     c.id = "slotCard"; c.className = "gcard slotg";
     c.innerHTML = '<div class="gb"><svg class="sgI" viewBox="0 0 100 76">' + CROWN.replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "") + '</svg><h3>Machine à sous VIP</h3>' +
-      '<p>Tente de multiplier tes points : MEGA JACKPOT, 777 et plein de bonus.</p><span class="gm">⭐ ' + points + ' pts' + (INFO ? " · mise " + INFO.cost + " pts" : "") + '</span><button>Jouer</button></div>';
+      '<p>Tente de multiplier tes points : MEGA JACKPOT, 777 et plein de bonus.</p><span class="gm">⭐ ' + points + ' pts' + (INFO ? " · mise de " + INFO.min_bet + " à " + INFO.max_bet + " pts" : "") + '</span><button>Jouer</button></div>';
     c.querySelector("button").onclick = openSlot;
     const soon = g.querySelector(".gcard.soon"); soon ? g.insertBefore(c, soon) : g.appendChild(c);
   }
@@ -3231,6 +3256,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
   };
 })();
 </script>
+
 
 
 </body>
