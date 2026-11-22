@@ -37,6 +37,7 @@ label{font-size:13px;opacity:.8}
   <button id="tabHistory" onclick="show('history')">Historique</button>
   <button id="tabReviews" onclick="show('reviews')">Avis</button>
   <button id="tabBot" onclick="show('bot')">Bot</button>
+  <button id="tabPromos" onclick="show('promos')">Promos</button>
 </div>
 
 <div id="ordersView"><div id="oList">Chargement...</div></div>
@@ -55,8 +56,10 @@ label{font-size:13px;opacity:.8}
       <option value="rupture">Rupture</option>
       <option value="bientot">Bientôt disponible</option>
     </select>
-    <label>Quantités et prix (quantité=prix, séparés par ;)</label>
-    <input id="fOpts" placeholder="1=10 ; 3=28 ; 5=45">
+    <label>Quantités et prix (quantité=prix, séparés par ;). Promo : ajoute &gt;prix promo, ex 3=28&gt;24</label>
+    <input id="fOpts" placeholder="1=10 ; 3=28&gt;24 ; 5=45">
+    <label>Fin de la promo (facultatif)</label>
+    <input id="fPromoEnd" type="datetime-local">
     <label>Photo</label>
     <img id="preview" alt="">
     <input type="file" id="fFile" accept="image/*" onchange="onFile(event)">
@@ -123,6 +126,24 @@ label{font-size:13px;opacity:.8}
   <div id="rList">Chargement...</div>
 </div>
 
+<div id="promosView" style="display:none">
+  <button class="ok" style="width:100%" onclick="openPromo()">➕ Nouveau code promo</button>
+  <div id="pcForm" class="card" style="display:none">
+    <h3 style="margin-top:0">Code promo</h3>
+    <label>Code (lettres et chiffres)</label><input id="pcCode" placeholder="BIENVENUE10" style="text-transform:uppercase">
+    <label>Type</label><select id="pcKind"><option value="percent">Pourcentage (%)</option><option value="fixed">Montant fixe (€)</option></select>
+    <label>Valeur</label><input id="pcValue" type="number" min="0" step="0.01" placeholder="10">
+    <label>Commande minimum (€, 0 = aucun)</label><input id="pcMin" type="number" min="0" step="1" value="0">
+    <label>Utilisations maximum au total (vide = illimité)</label><input id="pcMax" type="number" min="1" step="1">
+    <label>Utilisations par client</label><input id="pcPer" type="number" min="1" step="1" value="1">
+    <label>Réservé aux nouveaux clients</label><select id="pcNew"><option value="0">Non</option><option value="1">Oui</option></select>
+    <label>Fin de validité (facultatif)</label><input id="pcExp" type="datetime-local">
+    <label>État</label><select id="pcAct"><option value="1">Actif</option><option value="0">Désactivé</option></select>
+    <div class="row"><button class="ok" onclick="savePromo()">💾 Enregistrer</button><button class="no" onclick="$('pcForm').style.display='none'">Annuler</button></div>
+  </div>
+  <div id="pcList">Chargement...</div>
+</div>
+
 <div id="botView" style="display:none">
   <div class="card">
     <h3 style="margin-top:0">🤖 Mon bot Telegram</h3>
@@ -171,7 +192,7 @@ async function api(action, data = {}) {
 const $ = id => document.getElementById(id);
 
 function show(t) {
-  ["orders", "products", "clients", "wheel", "history", "reviews", "bot"].forEach(n => {
+  ["orders", "products", "clients", "wheel", "history", "reviews", "bot", "promos"].forEach(n => {
     $(n + "View").style.display = n === t ? "block" : "none";
     $("tab" + n.charAt(0).toUpperCase() + n.slice(1)).className = n === t ? "on" : "";
   });
@@ -181,6 +202,7 @@ function show(t) {
   else if (t === "wheel") { loadWheel(); loadSlotAdmin(); }
   else if (t === "reviews") loadReviews();
   else if (t === "bot") loadBot();
+  else if (t === "promos") loadPromos();
   else loadHistory();
 }
 
@@ -234,22 +256,24 @@ async function actOrder(action, id) {
 let PRODUCTS = [];
 const STATUS = { disponible: "Disponible", rupture: "Rupture", bientot: "Bientôt" };
 
-function optsToText(o) { return (o || []).map(x => x.q + "=" + x.p).join(" ; "); }
+function optsToText(o) { return (o || []).map(x => x.q + "=" + x.p + (x.promo != null ? ">" + x.promo : "")).join(" ; "); }
 let editingOpts = [];
 function textToOpts(t) {
   return t.split(";").map(s => s.trim()).filter(Boolean).map(s => {
-    const [q, p] = s.split("=");
-    const o = { q: String(q).trim().replace(",", "."), p: Number(String(p).trim().replace(",", ".")) };
+    const [q, rest] = s.split("=");
+    const [pp, pr] = String(rest).split(">");
+    const o = { q: String(q).trim().replace(",", "."), p: Number(String(pp).trim().replace(",", ".")) };
+    if (pr !== undefined && String(pr).trim() !== "") o.promo = Number(String(pr).trim().replace(",", "."));
     const old = editingOpts.find(x => String(x.q) === o.q);
     if (old && old.out) o.out = true;
     return o;
-  }).filter(o => o.q && !isNaN(o.p));
+  }).filter(o => o.q && !isNaN(o.p) && !(o.promo !== undefined && isNaN(o.promo)));
 }
 
 async function loadProducts() {
   const list = $("pList");
   try {
-    PRODUCTS = await api("products");
+    PRODUCTS = await api("admin_products");
     list.innerHTML = "";
     if (!PRODUCTS.length) { list.textContent = "Aucun produit."; return; }
     PRODUCTS.forEach(p => {
@@ -323,6 +347,7 @@ function openForm(p) {
   $("fCat").value = String(p.category || 1);
   $("fStatus").value = p.status || "disponible";
   $("fOpts").value = optsToText(p.options);
+  $("fPromoEnd").value = p.promo_until ? new Date(new Date(p.promo_until).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
   $("fVideo").value = p.video_url || "";
   $("fDesc").value = p.description || "";
   $("fMsg").textContent = "";
@@ -379,7 +404,8 @@ async function saveProduct() {
     options,
     image_url: $("fImg").value || null,
     video_url: $("fVideo").value.trim() || null,
-    description: $("fDesc").value.trim() || null
+    description: $("fDesc").value.trim() || null,
+    promo_until: $("fPromoEnd").value ? new Date($("fPromoEnd").value).toISOString() : null
   };
   try {
     await api("admin_save_product", { product });
@@ -717,6 +743,51 @@ async function saveSlot() {
   SLF.forEach(f => { const x = Number($("sf_" + f[0]).value) || 0; o[f[0]] = f[2] === 1 ? Math.round(x * 100) : x; });
   try { await api("admin_slot_save", o); $("slMsg2").textContent = "Enregistré ✓"; loadSlotAdmin(); }
   catch (e) { $("slMsg2").textContent = "Erreur : " + e.message; }
+}
+
+/* ---------- PROMOS (codes) ---------- */
+let PROMOS = [];
+async function loadPromos() {
+  const list = $("pcList");
+  try {
+    PROMOS = await api("admin_promos");
+    list.innerHTML = "";
+    if (!PROMOS.length) { list.textContent = "Aucun code promo."; return; }
+    PROMOS.forEach(c => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const t = document.createElement("div");
+      t.style.whiteSpace = "pre-line";
+      t.textContent = "🏷 " + c.code + " · " + (c.kind === "percent" ? "−" + c.value + " %" : "−" + c.value + " €") +
+        "\nUtilisé : " + c.used + (c.max_uses ? " / " + c.max_uses : "") + " · " + c.per_customer + " par client" +
+        (Number(c.min_order) > 0 ? "\nMinimum : " + c.min_order + " €" : "") + (c.new_only ? "\nNouveaux clients seulement" : "") +
+        (c.expires_at ? "\nExpire le " + new Date(c.expires_at).toLocaleString("fr-FR") : "") + (c.active ? "" : "\n(désactivé)");
+      card.appendChild(t);
+      const r = document.createElement("div");
+      r.className = "row";
+      const e = document.createElement("button"); e.className = "ok"; e.textContent = "✏️"; e.onclick = () => openPromo(c);
+      const a2 = document.createElement("button"); a2.className = "no"; a2.textContent = c.active ? "⏸ Désactiver" : "▶️ Activer";
+      a2.onclick = async () => { try { await api("admin_save_promo", { promo: { ...c, active: !c.active } }); } catch (er) { alert(er.message); } loadPromos(); };
+      const d = document.createElement("button"); d.className = "del"; d.textContent = "🗑";
+      d.onclick = async () => { if (!confirm("Supprimer " + c.code + " ?")) return; try { await api("admin_delete_promo", { code: c.code }); } catch (er) { alert(er.message); } loadPromos(); };
+      r.append(e, a2, d); card.appendChild(r); list.appendChild(card);
+    });
+  } catch (e) { list.textContent = "Erreur : " + e.message; }
+}
+function openPromo(c) {
+  c = c || {};
+  $("pcCode").value = c.code || ""; $("pcCode").disabled = !!c.code;
+  $("pcKind").value = c.kind || "percent"; $("pcValue").value = c.value || "";
+  $("pcMin").value = c.min_order || 0; $("pcMax").value = c.max_uses || ""; $("pcPer").value = c.per_customer || 1;
+  $("pcNew").value = c.new_only ? "1" : "0"; $("pcAct").value = c.active === false ? "0" : "1";
+  $("pcExp").value = c.expires_at ? new Date(new Date(c.expires_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+  $("pcForm").style.display = "block"; $("pcForm").scrollIntoView({ behavior: "smooth" });
+}
+async function savePromo() {
+  const promo = { code: $("pcCode").value, kind: $("pcKind").value, value: $("pcValue").value, min_order: $("pcMin").value,
+    max_uses: $("pcMax").value, per_customer: $("pcPer").value, new_only: $("pcNew").value === "1",
+    expires_at: $("pcExp").value ? new Date($("pcExp").value).toISOString() : null, active: $("pcAct").value === "1" };
+  try { await api("admin_save_promo", { promo }); $("pcForm").style.display = "none"; loadPromos(); } catch (e) { alert(e.message); }
 }
 
 /* ---------- BOT ---------- */
