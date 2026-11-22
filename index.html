@@ -3256,6 +3256,129 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
   };
 })();
 </script>
+<style>
+.pcard{position:relative}
+.promoB{position:absolute;top:8px;left:8px;z-index:2;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:900;letter-spacing:1px;
+  color:#fff;background:linear-gradient(180deg,#ff7a7a,#e0202a);box-shadow:0 0 12px rgba(255,60,60,.65)}
+.pcard .was,.popt .was{text-decoration:line-through;opacity:.55;font-weight:400;font-size:12px;margin-left:6px;color:#fff}
+.popt.promoOpt{border-color:#ff5a5a !important}
+#pTitle .promoB{position:static;display:inline-block;margin-left:8px;vertical-align:middle}
+#promoBox{margin:12px 0}
+#promoBox .pr{display:flex;gap:8px}
+#promoBox input{flex:1;margin:0 !important;text-transform:uppercase}
+#promoBox .ap{padding:0 16px;white-space:nowrap}
+#promoMsg{font-size:13px;margin-top:6px}
+#promoLine{display:none;margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,212,0,.12);border:1px solid rgba(255,212,0,.4);font-size:14px}
+#cartSection.empty #promoBox{display:none}
+</style>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  let PROMO = null, last = null, timer = null;
+
+  /* le code promo part avec chaque commande (le serveur le recalcule) */
+  const baseApi = api;
+  api = async function (action, data) {
+    if (action === "order" && PROMO && PROMO.code) {
+      data = Object.assign({}, data, { promo_code: PROMO.code });
+      last = Object.assign({ at: Date.now() }, PROMO);
+    }
+    return baseApi(action, data);
+  };
+
+  /* badge PROMO et ancien prix barré sur les cartes produits */
+  const baseRP = renderProducts;
+  renderProducts = function (list) {
+    baseRP(list);
+    const cards = $("productList").children;
+    list.forEach((p, i) => {
+      const opts = p.options || [];
+      if (!cards[i] || !opts.some(o => o.was != null)) return;
+      const b = document.createElement("div");
+      b.className = "promoB"; b.textContent = "PROMO";
+      cards[i].appendChild(b);
+      const av = opts.filter(o => !o.out);
+      const best = av.reduce((m, o) => (!m || Number(o.p) < Number(m.p)) ? o : m, null);
+      const pr = cards[i].querySelector(".pprice");
+      if (best && best.was != null && pr) {
+        const s = document.createElement("s");
+        s.className = "was"; s.textContent = money(best.was) + " €";
+        pr.appendChild(s);
+      }
+    });
+  };
+
+  /* prix barrés dans la fiche produit */
+  const baseOP = openProduct;
+  openProduct = function (p) {
+    baseOP(p);
+    const opts = p.options || [];
+    document.querySelectorAll("#pOpts .popt").forEach((d, idx) => {
+      const o = opts[idx];
+      if (!o || o.was == null) return;
+      const b = d.querySelector("b");
+      const s = document.createElement("s");
+      s.className = "was"; s.textContent = Number(o.was).toFixed(2) + " €";
+      if (b) b.parentNode.insertBefore(s, b);
+      d.classList.add("promoOpt");
+    });
+    if (opts.some(o => o.was != null)) {
+      const b = document.createElement("span");
+      b.className = "promoB"; b.textContent = "PROMO";
+      $("pTitle").appendChild(b);
+    }
+  };
+
+  /* champ « code promo » dans le panier */
+  const cartSec = $("cartSection");
+  const box = document.createElement("div");
+  box.id = "promoBox";
+  box.innerHTML = '<div class="pr"><input id="promoIn" placeholder="Code promo" autocomplete="off" autocapitalize="characters"><button class="ap">Appliquer</button></div><div id="promoMsg"></div><div id="promoLine"></div>';
+  cartSec.insertBefore(box, cartSec.querySelector(":scope > button"));
+
+  function setPromo(r) {
+    PROMO = r && r.ok ? r : null;
+    const line = $("promoLine");
+    if (PROMO) {
+      $("promoMsg").textContent = "✅ Code " + PROMO.code + " appliqué (" + PROMO.label + ")";
+      line.style.display = "block";
+      line.innerHTML = "Code <b>" + PROMO.code + "</b> : −" + money(PROMO.discount) + " €<br>À payer : <b>" + money(PROMO.total) +
+        ' €</b> <a href="#" id="promoX" style="color:#ffd400;margin-left:8px">Retirer</a>';
+      $("promoX").onclick = e => { e.preventDefault(); setPromo(null); $("promoIn").value = ""; $("promoMsg").textContent = ""; };
+    } else { line.style.display = "none"; line.innerHTML = ""; }
+  }
+  async function check() {
+    const code = (PROMO && PROMO.code) || $("promoIn").value.trim();
+    if (!code || !cart.length) { setPromo(null); return; }
+    try {
+      const r = await api("promo_check", { code, items: cart.map(c => ({ code: c.code, i: c.i })) });
+      if (r.ok) setPromo(r);
+      else { setPromo(null); $("promoMsg").textContent = "❌ " + r.error; }
+    } catch (e) { $("promoMsg").textContent = "Connexion perdue, réessaie."; }
+  }
+  box.querySelector(".ap").onclick = check;
+
+  /* le total se met à jour quand le panier change */
+  const baseRC = renderCart;
+  renderCart = function () {
+    baseRC();
+    if (!cart.length) { setPromo(null); $("promoMsg").textContent = ""; $("promoIn").value = ""; return; }
+    clearTimeout(timer);
+    if (PROMO) timer = setTimeout(check, 300);
+  };
+
+  /* le message envoyé au vendeur reprend la réduction */
+  const enc = window.encodeURIComponent;
+  window.encodeURIComponent = function (s) {
+    if (last && Date.now() - last.at < 120000 && typeof s === "string" && s.indexOf("voici ma commande") >= 0) {
+      s = s.replace(/\nTotal : ([^\n]*)/, "\nSous-total : $1\nCode promo " + last.code + " : −" + money(last.discount) +
+        " €\nTotal à payer : " + money(last.total) + " €");
+    }
+    return enc(s);
+  };
+  renderCart();
+})();
+</script>
 
 
 
