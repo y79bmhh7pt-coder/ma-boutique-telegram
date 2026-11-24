@@ -38,6 +38,7 @@ label{font-size:13px;opacity:.8}
   <button id="tabReviews" onclick="show('reviews')">Avis</button>
   <button id="tabBot" onclick="show('bot')">Bot</button>
   <button id="tabPromos" onclick="show('promos')">Promos</button>
+  <button id="tabMsgs" onclick="show('msgs')">Messages</button>
 </div>
 
 <div id="ordersView"><div id="oList">Chargement...</div></div>
@@ -144,6 +145,34 @@ label{font-size:13px;opacity:.8}
   <div id="pcList">Chargement...</div>
 </div>
 
+<div id="msgsView" style="display:none">
+  <div class="card">
+    <h3 style="margin-top:0">📣 Message à tes clients</h3>
+    <div class="small">Envoyé par ton bot. Seuls les clients qui ont lancé le bot peuvent le recevoir. Ceux qui ont tapé /stop sont exclus.</div>
+    <label>Qui reçoit le message ?</label>
+    <select id="bcAud" onchange="bcCount()">
+      <option value="all">Tous les clients</option>
+      <option value="inactive">Inactifs depuis 30 jours</option>
+      <option value="new">Inscrits sans commande</option>
+      <option value="buyers">Clients ayant déjà commandé</option>
+    </select>
+    <div id="bcCnt" class="small" style="margin:-4px 0 8px"></div>
+    <label>Message (1000 caractères max)</label>
+    <textarea id="bcText" rows="6" maxlength="1000" placeholder="Nouveauté, promo, annonce..."></textarea>
+    <label>Ajouter un code promo (facultatif)</label>
+    <select id="bcPromo"><option value="">Aucun</option></select>
+    <label>Bouton « Ouvrir la boutique »</label>
+    <select id="bcBtn"><option value="1">Oui</option><option value="0">Non</option></select>
+    <div class="row">
+      <button class="no" onclick="bcSend(true)">🧪 Test sur moi</button>
+      <button class="ok" onclick="bcSend(false)">📣 Envoyer</button>
+    </div>
+    <div id="bcMsg" class="small" style="margin-top:8px"></div>
+  </div>
+  <h3 style="color:#ffd400">Derniers envois</h3>
+  <div id="bcList">Chargement...</div>
+</div>
+
 <div id="botView" style="display:none">
   <div class="card">
     <h3 style="margin-top:0">🤖 Mon bot Telegram</h3>
@@ -192,7 +221,7 @@ async function api(action, data = {}) {
 const $ = id => document.getElementById(id);
 
 function show(t) {
-  ["orders", "products", "clients", "wheel", "history", "reviews", "bot", "promos"].forEach(n => {
+  ["orders", "products", "clients", "wheel", "history", "reviews", "bot", "promos", "msgs"].forEach(n => {
     $(n + "View").style.display = n === t ? "block" : "none";
     $("tab" + n.charAt(0).toUpperCase() + n.slice(1)).className = n === t ? "on" : "";
   });
@@ -203,6 +232,7 @@ function show(t) {
   else if (t === "reviews") loadReviews();
   else if (t === "bot") loadBot();
   else if (t === "promos") loadPromos();
+  else if (t === "msgs") loadMsgs();
   else loadHistory();
 }
 
@@ -790,6 +820,45 @@ async function savePromo() {
   try { await api("admin_save_promo", { promo }); $("pcForm").style.display = "none"; loadPromos(); } catch (e) { alert(e.message); }
 }
 
+/* ---------- MESSAGES À TOUS ---------- */
+async function bcCount() {
+  try { const r = await api("admin_bc_count", { audience: $("bcAud").value }); $("bcCnt").textContent = "≈ " + r.count + " client(s) concerné(s)"; }
+  catch (e) { $("bcCnt").textContent = ""; }
+}
+async function loadMsgs() {
+  bcCount();
+  try {
+    const promos = await api("admin_promos");
+    const sel = $("bcPromo"), cur = sel.value;
+    sel.innerHTML = '<option value="">Aucun</option>';
+    promos.filter(c => c.active).forEach(c => { const o = document.createElement("option"); o.value = c.code; o.textContent = c.code; sel.appendChild(o); });
+    sel.value = cur;
+    const list = await api("admin_bc_list");
+    $("bcList").innerHTML = "";
+    if (!list.length) { $("bcList").textContent = "Aucun envoi pour l'instant."; return; }
+    list.forEach(b => {
+      const c = document.createElement("div");
+      c.className = "card";
+      c.style.whiteSpace = "pre-line";
+      c.textContent = new Date(b.created_at).toLocaleString("fr-FR") + " · " + b.audience + "\n" +
+        (b.done ? "✅ Terminé" : "⏳ En cours") + " : " + b.sent + " envoyé(s) sur " + b.total + (b.failed ? " · " + b.failed + " échec(s)" : "") +
+        "\n" + b.text.split("\n")[0].slice(0, 80);
+      $("bcList").appendChild(c);
+    });
+  } catch (e) { $("bcList").textContent = "Erreur : " + e.message; }
+}
+async function bcSend(test) {
+  const text = $("bcText").value.trim();
+  if (!text) { $("bcMsg").textContent = "Écris un message."; return; }
+  if (!test && !confirm("Envoyer ce message à " + $("bcCnt").textContent.replace("≈ ", "") + " ?")) return;
+  $("bcMsg").textContent = "Envoi...";
+  try {
+    const r = await api("admin_bc_send", { text, audience: $("bcAud").value, promo: $("bcPromo").value, button: $("bcBtn").value === "1", test });
+    $("bcMsg").textContent = test ? "Test envoyé dans ta discussion avec le bot ✓" : "Envoi lancé à " + r.total + " client(s) ✓ (voir « Derniers envois »)";
+    if (!test) { $("bcText").value = ""; setTimeout(loadMsgs, 2000); }
+  } catch (e) { $("bcMsg").textContent = "Erreur : " + e.message; }
+}
+
 /* ---------- BOT ---------- */
 async function loadBot() {
   try {
@@ -834,3 +903,4 @@ loadOrders();
 refreshReviewBadge();
 </script>
 </body></html>
+
