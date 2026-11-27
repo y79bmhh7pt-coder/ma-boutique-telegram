@@ -3380,7 +3380,122 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold) !i
 })();
 </script>
 
-
+<style>
+#boot {
+  position: fixed;
+  inset: 0;
+  z-index: 50000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Fond de la mini-app */
+  background: var(--app-bg, #080808);
+  transition: opacity .5s;
+}
+#boot.off {
+  opacity: 0;
+  pointer-events: none;
+}
+#boot .rg {
+  width: 84px;
+  height: 84px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,212,0,.18);
+  border-top-color: #ffd400;
+  animation: bspin 1s linear infinite;
+  box-shadow: 0 0 22px rgba(255,212,0,.35);
+}
+@keyframes bspin {
+  to { transform: rotate(360deg); }
+}
+#boot .lg {
+  font-family: var(--fontTitle, Anton, Impact, sans-serif);
+  font-size: 38px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.05;
+  background: linear-gradient(180deg,#fff6bf,#ffd400 50%,#ff9d00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 14px rgba(255,212,0,.5));
+}
+#boot .bar {
+  width: min(70vw,260px);
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.1);
+  margin-top: 22px;
+  overflow: hidden;
+}
+#boot .bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg,#ff9d00,#ffd400,#fff6bf);
+  transition: width .3s;
+}
+#boot .tx {
+  margin-top: 10px;
+  font-size: 13px;
+  opacity: .7;
+}
+@media (prefers-reduced-motion: reduce) {
+  #boot .rg { animation-duration: 3s; }
+}
+</style>
+<script>
+(function () {
+  const o = document.createElement("div");
+  o.id = "boot";
+  o.innerHTML = `
+    <div class="rg"></div>
+    <div class="lg">Labo<br>Express 57</div>
+    <div class="bar"><i></i></div>
+    <div class="tx">Préparation de ta boutique…</div>
+  `;
+  document.body.appendChild(o);
+  const bar = o.querySelector("i");
+  const tx = o.querySelector(".tx");
+  const t0 = Date.now();
+  let closed = false;
+  const dataOk = () =>
+    typeof window.myBons !== "undefined" &&
+    typeof products !== "undefined" &&
+    ["1", "2"].some(k =>
+      products[k] &&
+      products[k][0] &&
+      ("image_url" in products[k][0])
+    );
+  function close() {
+    if (closed) return;
+    closed = true;
+    bar.style.width = "100%";
+    setTimeout(() => {
+      o.classList.add("off");
+      setTimeout(() => o.remove(), 600);
+    }, 250);
+  }
+  (function tick() {
+    if (closed) return;
+    const data = dataOk();
+    const elapsed = Date.now() - t0;
+    bar.style.width = data ? "100%" :
+      Math.min(90, Math.round(elapsed / 9000 * 90)) + "%";
+    tx.textContent = data
+      ? "C'est prêt !"
+      : "Chargement des produits…";
+    if ((data && elapsed > 700) || elapsed > 9000) {
+      close();
+    } else {
+      setTimeout(tick, 150);
+    }
+  })();
+})();
+</script>
 
 </body>
 </html>
