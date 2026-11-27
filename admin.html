@@ -39,6 +39,7 @@ label{font-size:13px;opacity:.8}
   <button id="tabBot" onclick="show('bot')">Bot</button>
   <button id="tabPromos" onclick="show('promos')">Promos</button>
   <button id="tabMsgs" onclick="show('msgs')">Messages</button>
+  <button id="tabContacts" onclick="show('contacts')">Contacts</button>
 </div>
 
 <div id="ordersView"><div id="oList">Chargement...</div></div>
@@ -173,6 +174,22 @@ label{font-size:13px;opacity:.8}
   <div id="bcList">Chargement...</div>
 </div>
 
+<div id="contactsView" style="display:none">
+  <button class="ok" style="width:100%" onclick="openContact()">➕ Nouveau contact ou réseau</button>
+  <div id="ctForm" class="card" style="display:none">
+    <h3 style="margin-top:0">Contact</h3>
+    <input type="hidden" id="ctId">
+    <label>Réseau (icône)</label>
+    <select id="ctKind"><option value="telegram">Telegram</option><option value="signal">Signal</option><option value="snapchat">Snapchat</option><option value="toto">Toto Talks</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="link">Autre lien</option></select>
+    <label>Nom affiché</label><input id="ctLabel" placeholder="Telegram">
+    <label>Lien (https://...)</label><input id="ctUrl" placeholder="https://t.me/ton_pseudo">
+    <label>Ordre d'affichage (1 = en premier)</label><input id="ctPos" type="number" value="1">
+    <label>État</label><select id="ctAct"><option value="1">Affiché</option><option value="0">Masqué</option></select>
+    <div class="row"><button class="ok" onclick="saveContact()">💾 Enregistrer</button><button class="no" onclick="$('ctForm').style.display='none'">Annuler</button></div>
+  </div>
+  <div id="ctList">Chargement...</div>
+</div>
+
 <div id="botView" style="display:none">
   <div class="card">
     <h3 style="margin-top:0">🤖 Mon bot Telegram</h3>
@@ -221,7 +238,7 @@ async function api(action, data = {}) {
 const $ = id => document.getElementById(id);
 
 function show(t) {
-  ["orders", "products", "clients", "wheel", "history", "reviews", "bot", "promos", "msgs"].forEach(n => {
+  ["orders", "products", "clients", "wheel", "history", "reviews", "bot", "promos", "msgs", "contacts"].forEach(n => {
     $(n + "View").style.display = n === t ? "block" : "none";
     $("tab" + n.charAt(0).toUpperCase() + n.slice(1)).className = n === t ? "on" : "";
   });
@@ -233,6 +250,7 @@ function show(t) {
   else if (t === "bot") loadBot();
   else if (t === "promos") loadPromos();
   else if (t === "msgs") loadMsgs();
+  else if (t === "contacts") loadContacts();
   else loadHistory();
 }
 
@@ -859,6 +877,43 @@ async function bcSend(test) {
   } catch (e) { $("bcMsg").textContent = "Erreur : " + e.message; }
 }
 
+/* ---------- CONTACTS ET RÉSEAUX ---------- */
+let CONTACTS = [];
+async function loadContacts() {
+  const list = $("ctList");
+  try {
+    CONTACTS = await api("admin_contacts");
+    list.innerHTML = "";
+    if (!CONTACTS.length) { list.textContent = "Aucun contact."; return; }
+    CONTACTS.forEach(c => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const t = document.createElement("div");
+      t.style.whiteSpace = "pre-line";
+      t.textContent = c.position + ". " + c.label + " (" + c.kind + ")\n" + (c.url || "⚠️ lien à remplir") + (c.active ? "" : "\n(masqué)");
+      card.appendChild(t);
+      const r = document.createElement("div"); r.className = "row";
+      const e = document.createElement("button"); e.className = "ok"; e.textContent = "✏️"; e.onclick = () => openContact(c);
+      const a2 = document.createElement("button"); a2.className = "no"; a2.textContent = c.active ? "⏸ Masquer" : "▶️ Afficher";
+      a2.onclick = async () => { try { await api("admin_save_contact", { contact: { ...c, active: !c.active } }); } catch (er) { alert(er.message); } loadContacts(); };
+      const d = document.createElement("button"); d.className = "del"; d.textContent = "🗑";
+      d.onclick = async () => { if (!confirm("Supprimer " + c.label + " ?")) return; try { await api("admin_delete_contact", { id: c.id }); } catch (er) { alert(er.message); } loadContacts(); };
+      r.append(e, a2, d); card.appendChild(r); list.appendChild(card);
+    });
+  } catch (e) { list.textContent = "Erreur : " + e.message; }
+}
+function openContact(c) {
+  c = c || {};
+  $("ctId").value = c.id || ""; $("ctKind").value = c.kind || "link"; $("ctLabel").value = c.label || "";
+  $("ctUrl").value = c.url || ""; $("ctPos").value = c.position || (CONTACTS.length + 1); $("ctAct").value = c.active === false ? "0" : "1";
+  $("ctForm").style.display = "block"; $("ctForm").scrollIntoView({ behavior: "smooth" });
+}
+async function saveContact() {
+  const contact = { id: $("ctId").value || null, kind: $("ctKind").value, label: $("ctLabel").value, url: $("ctUrl").value,
+    position: $("ctPos").value, active: $("ctAct").value === "1" };
+  try { await api("admin_save_contact", { contact }); $("ctForm").style.display = "none"; loadContacts(); } catch (e) { alert(e.message); }
+}
+
 /* ---------- BOT ---------- */
 async function loadBot() {
   try {
@@ -903,4 +958,3 @@ loadOrders();
 refreshReviewBadge();
 </script>
 </body></html>
-
