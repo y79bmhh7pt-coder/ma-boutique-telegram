@@ -288,7 +288,11 @@ async function loadOrders() {
       const n = document.createElement("button");
       n.className = "no"; n.textContent = "❌ Annuler";
       n.onclick = () => actOrder("admin_cancel", o.id);
-      r.append(v, n);
+      const ct = document.createElement("button");
+      ct.className = "no"; ct.textContent = "💬";
+      ct.style.flex = "0 0 52px";
+      ct.onclick = () => openChat(o.username, o.telegram_id);
+      r.append(v, n, ct);
       c.appendChild(r);
       list.appendChild(c);
     });
@@ -477,6 +481,16 @@ async function loadClients() {
 
 function isVer(c) { return c.verified || (c.orders > 0 && !c.must_verify); }
 
+function openChat(username, id) {
+  if (username) {
+    const u = "https://t.me/" + username;
+    if (tg && tg.openTelegramLink) tg.openTelegramLink(u); else window.open(u, "_blank");
+  } else {
+    alert("Ce client n'a pas de pseudo Telegram public. J'essaie d'ouvrir sa conversation avec son identifiant ; si rien ne s'ouvre, tu ne peux pas le contacter directement.");
+    window.location.href = "tg://user?id=" + id;
+  }
+}
+
 function renderClients() {
   const list = $("cList");
   const q = $("cSearch").value.trim().toLowerCase().replace(/^@/, "");
@@ -537,7 +551,12 @@ function renderClients() {
       catch (e) { alert(e.message); }
       loadClients();
     };
-    r2.append(blk, ver);
+    const con = document.createElement("button");
+    con.className = "ok"; con.textContent = "💬 Contacter";
+    con.style.flex = "1 1 100%";
+    con.onclick = () => openChat(c.username, c.telegram_id);
+    r2.style.flexWrap = "wrap";
+    r2.append(con, blk, ver);
     card.appendChild(r2);
     list.appendChild(card);
   });
